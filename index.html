@@ -3,18 +3,41 @@ layout: home
 author_profile: true
 ---
 
-<header class="site-category">
-  <ul>
-    
-    {% assign pages_list = site.pages %}
-    {% for node in pages_list %}
-      {% if node.title != null %}
-        {% if node.layout == "category" %}
-          <li><a class="category-link {% if page.url == node.url %} active{% endif %}"
-          href="{{ site.baseurl }}{{ node.url }}">{{ node.title }}</a></li>
-        {% endif %}
-      {% endif %}
-    {% endfor %}
-    
-</ul>
-</header>
+<div class="site-category">
+    <ul class='cat1'>
+      <li><a href="/">Home</a></li>
+      <li><a href="/">언어</a>
+        <ul>
+            <li><a href="/category/언어/Python/Crawler">Python</a></li>
+            <li><a href="/category/언어/Python/Crawler">C#</a></li>
+            <li><a href="/category/언어/Python/Crawler">C++</a></li>
+            <li><a href="/category/언어/Python/Crawler">Java</a></li>
+        </ul>
+      </li>
+
+      <li><a href="/">인공지능</a>
+        <ul>
+          <li><a href="/category/인공지능/MachineLearning">Machine Learning</a></li>
+          <li><a href="/category/인공지능/자연어처리">자연어처리</a></li>
+          <li><a href="/category/인공지능/공부">공부</a></li>
+        </ul>
+      </li>
+
+      <li><a href="/">Project</a>
+        <ul>
+            <li><a href="/category/Project/Game">Game</a></li>
+            <li><a href="/category/Project/Unity">Unity</a></li>
+            <li><a href="/category/Project/Web">Web</a></li>
+            <li><a href="/category/Project/그외">그외</a></li>
+        </ul>
+      </li>
+
+      <li><a href="/">Study</a>
+        <ul>
+          <li><a href="/category/Study/coding">Coding</a></li>
+          <li><a href="/category/Study/그외">그외</a></li>
+        </ul>
+      </li>
+
+    </ul>
+  </div>
