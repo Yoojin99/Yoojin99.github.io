@@ -4,6 +4,7 @@ excerpt: "책 "AI for Game Developers" 공부"
 
 categories:
   - AI
+  
 tags:
   - AI 
   - AI for Game Developers
@@ -11,6 +12,7 @@ tags:
 ---
 
 학교 도서관에서 "AI for Game Developers"라는 책을 봤다.
+
 ![AI_for_Game_Developers_책](https://user-images.githubusercontent.com/41438361/85862194-66a5b980-b7fc-11ea-9505-4b929b9b7fcb.jpg)
 
 이 책이다.
