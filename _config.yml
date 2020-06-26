@@ -245,6 +245,15 @@ category_archive:
 tag_archive:
   type: liquid
   path: /tags/
+AI:
+  type: liquid
+  path: /categories/AI/
+DS&ML:
+  type: liquid
+  path: /categories/DS&ML/
+소소:
+  type: liquid
+  path: /categories/소소/
 # https://github.com/jekyll/jekyll-archives
 # jekyll-archives:
 #   enabled:
