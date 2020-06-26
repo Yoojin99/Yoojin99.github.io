@@ -9,6 +9,7 @@ tags:
   - AI 
   - AI for Game Developers
   - 공부
+last_modified_at: 2019-04-13T08:06:00-05:00
 ---
 
 학교 도서관에서 "AI for Game Developers"라는 책을 봤다.
