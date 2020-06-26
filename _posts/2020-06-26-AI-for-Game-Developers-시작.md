@@ -1,6 +1,6 @@
 ---
 title:  "AI for Game Developer 시작"
-excerpt: "책 "AI for Game Developers" 공부"
+excerpt: "책 AI for Game Developers 공부"
 
 categories:
   - AI
