@@ -251,9 +251,13 @@ AI:
 DS&ML:
   type: liquid
   path: /categories/DS&ML/
+Unity:
+  type: liquid
+  path: /categories/Unity/
 소소:
   type: liquid
   path: /categories/소소/
+
 # https://github.com/jekyll/jekyll-archives
 # jekyll-archives:
 #   enabled:
