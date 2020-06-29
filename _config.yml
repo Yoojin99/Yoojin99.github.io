@@ -256,7 +256,7 @@ Unity:
   path: /categories/Unity/
 소소:
   type: liquid
-  path: /categories/소소/
+  path: /categories/soso/
 
 # https://github.com/jekyll/jekyll-archives
 # jekyll-archives:
