@@ -1,9 +1,9 @@
 ---
-title: "데이터구조와 알고리즘"
+title: "C다데알"
 layout: category
 author_profile: true
-taxonomy: 데이터구조와 알고리즘
-permalink: /categories/DS&AL/
+taxonomy: C다데알
+permalink: /categories/DS&AL/C다데알/
 ---
 
 데이터구조와 알고리즘
