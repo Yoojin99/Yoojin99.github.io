@@ -6,4 +6,4 @@ taxonomy: C다데알
 permalink: /categories/DS&AL/C다데알/
 ---
 
-데이터구조와 알고리즘
+다양한 예제로 학습하는 데이터 구조와 알고리즘 (C)
