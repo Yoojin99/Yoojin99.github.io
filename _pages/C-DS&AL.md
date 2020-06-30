@@ -2,7 +2,7 @@
 title: "C다데알"
 layout: category
 author_profile: true
-taxonomy: C다데알
+taxonomy: C-DS&AL
 permalink: /categories/DS&AL/C다데알/
 ---
 
