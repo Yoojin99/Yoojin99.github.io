@@ -1,4 +1,4 @@
-## [Link](Yoojin99.github.io)
+## [Link](https://yoojin99.github.io/)
 
 # [Minimal Mistakes Jekyll theme](https://mmistakes.github.io/minimal-mistakes/)
 
