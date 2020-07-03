@@ -1,4 +1,4 @@
-# [Yoojin99의 Github 블로그](https://yoojin99.github.io/)
+# [:fire: Yoojin99의 Github 블로그 :fire:](https://yoojin99.github.io/)
 
 ## [Minimal Mistakes Jekyll theme](https://mmistakes.github.io/minimal-mistakes/)
 
