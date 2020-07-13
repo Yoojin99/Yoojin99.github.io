@@ -1,6 +1,6 @@
 ---
-title:  "C# Nullable type "?"에 대해"
-excerpt: ""
+title:  "[C#] Nullable Type - "?"에 "
+excerpt: "Chatbot 공부 시작"
 
 toc: true
 toc_sticky: true
@@ -10,13 +10,11 @@ header:
   
   
 categories:
-  - Chatbot
+  - C#
   
 tags:
-  - C#
   - 공부
-  
-  
+  - C#
 last_modified_at: 
 ---
 
