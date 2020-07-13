@@ -20,7 +20,7 @@ tags:
 last_modified_at: 
 ---
 
-[C#] Nullable type, "?"에 대해
+C# Nullable type, "?"에 대해
 ========================
 
 C# 코드를 보다보니 
