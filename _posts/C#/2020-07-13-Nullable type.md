@@ -1,5 +1,5 @@
 ---
-title:  "[C#] Nullable Type - "?"에 "
+title:  "[C#] Nullable Type - \"?\" 에 대해"
 excerpt: "Chatbot 공부 시작"
 
 toc: true
