@@ -1,0 +1,59 @@
+---
+title:  "Unity - DOTween"
+
+toc: true
+toc_sticky: true
+toc_label: "페이지 주요 목차"
+header:
+  teaser: 
+  
+  
+categories:
+  - Chatbot
+  
+tags:
+  - C#
+  - 공부
+  - Unity
+  - DOTween
+  
+last_modified_at: 
+---
+
+DOTween이란?
+
+**오브젝트의 애니메이션 혹은 부드럽게 값을 변경할 때 기존의 유니티 내에서 제공하는 애니메이션 기능이나 번거로운 스크립트 작성 대신 함수 몇개로 쉽고 다양한 모션을 줄 수 있는 간편한 API**
+
+공식 문서는 다음과 같다. [DOTween 공식문서](http://dotween.demigiant.com/documentation.php)
+
+
+DOTween은 특정 변수 값들을 일정 시간 원하는 값으로 부드럽게 변화 시켜 주는 역할을 한다.
+
+(float, double, int, uint, long, ulong, Vector2/3/4, Quaternion, Rect, RectOffset, Color, string 등)
+
+
+## Tweener
+
+위와 같이 부드럽게 변환을 시켜주는 애를 **Tweener**라고 한다. Tweener를 사용하는데는 일반적으로 두 가지 방법이 존재한다.
+
+우선 DOTween 관련 함수를 사용하려면 아래와 같이 네임스페이스를 추가해야 한다.
+
+```C#
+using DG.Tweening //import
+```
+
+### 1. DOTween.To 이용
+
+`static DOTween.To(getter, setter, to, float duration)`
+
+1. getter - 초기값이 될 변수 혹은 값
+2. setter - 변환되는 값을 매개변수로 하는 함수 정의
+3. to - 목표 값
+4. duration - 변화 시간
+
+```C#
+DOTween.To(()=> myFloat, x=> myFloat = x, 100, 1);
+DOTween.To(()=> myVector, x=> myVector = x, new Vector3(3,4,5), 10);
+
+DOTween.To(() => "", str => myString = str, "hello, world!", 3);
+```
