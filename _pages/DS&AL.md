@@ -1,9 +1,9 @@
 ---
-title: "DS&AL"
+title: "자료구조"
 layout: category
 author_profile: true
-taxonomy: DS&AL
-permalink: /categories/DS&AL/
+taxonomy: 자료구조
+permalink: /categories/자료구조/
 ---
 
-데이터구조와 알고리즘
+자료구조
