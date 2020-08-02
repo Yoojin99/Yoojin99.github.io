@@ -57,3 +57,41 @@ DOTween.To(()=> myVector, x=> myVector = x, new Vector3(3,4,5), 10);
 
 DOTween.To(() => "", str => myString = str, "hello, world!", 3);
 ```
+
+### 2. 오브젝트 컴포넌트에 연결
+
+1번째 방법보다 더 자주 사용하는 방식으로, 접근 방식이 직관적이기 떄문에 관리가 편리하다.
+
+보통 값 변환을 원하는 컴포넌트의 뒤에 .Do~를 연결해서 사용한다.
+
+|주로 사용하는 컴포넌트|
+|---------------------|
+|Transform(move/rotate/scale)|
+|Material(color / fade)|
+|Text|
+|Camera|
+|Light|
+|Rigidbody|
+
+
+#### 1) Transform : 오브젝트의 기본적인 이동, 회전, 크기 변환을 일정 시간동아 변환한다.
+
+```C#
+transform.DoMove(Vector3 목표값, float 변화시간, (bool 정수단위 이동여부));
+transform.DoRotate(Vector3 목표값, float 변화시간, (RotateMode 회전방식));
+transform.DoScale(Vector3 목표값, float 변화시간);
+
+transform.DoLocalMove(...); //로컬 좌표 이동
+transform.DoMoveX(...); //x축 이동
+```
+
+**.DoShakePosition을 사용하면 충돌 시 흔들리는 효과를 간편하게 낼 수 있다.**
+
+#### 2) Material : 오브젝트의 컬러값, 알파값등을 일정 시간동안 부드럽게 변환한다.
+
+
+
+
+
+
+
