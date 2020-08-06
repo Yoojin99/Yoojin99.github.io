@@ -89,8 +89,82 @@ transform.DoMoveX(...); //x축 이동
 
 #### 2) Material : 오브젝트의 컬러값, 알파값등을 일정 시간동안 부드럽게 변환한다.
 
+```C#
+.DoColor(Color 목표값, float 변화시간)
+.DOFade(float 목표값, float 변화시간)
+```
 
+![1](https://user-images.githubusercontent.com/41438361/89488919-33375100-d7e4-11ea-8cf2-800d5de6ac31.gif)
 
+#### 3) Text : 일정 시간동안 텍스트가 타이핑되는 효과를 준다.
+
+```C#
+.DoText(string 전체텍스트, float 변화시간, (...))
+```
+
+![2](https://user-images.githubusercontent.com/41438361/89489027-7bef0a00-d7e4-11ea-980a-028c616588d5.gif)
+
+그 외에 또 이용할 수 있는 함수들은 [여기](http://dotween.demigiant.com/documentation.php#shortcuts)를 참고하면 된다.
+
+### Ease
+
+`.SetEase(Ease easeType / AnimationCurve animCurve / EaseFunction customEase)`
+
+변환에 부드러움, 다양함을 주기 위해 사용하는 변화량 그래프로 Tweener 뒤에 붙여 설정한다.
+
+```C#
+box.DOLocalMoveX(400, 1).SetEase(Ease.Linear);
+```
+
+![3](https://user-images.githubusercontent.com/41438361/89494198-9f1fb680-d7f0-11ea-95c9-e44678018dd7.gif)
+
+![4](https://user-images.githubusercontent.com/41438361/89494515-4e5c8d80-d7f1-11ea-8754-1f3160fd7600.png)
+
+*Tip) 제공하는 종류가 많아 헷갈릴 수 있기 때문에 스크립트를 계속 변경하며 테스트하기 보다는 Ease 변수를 public으로 설정하여 Inspector창에서 값을 변경하는 테스트 방법을 권장한다.*
+
+![5](https://user-images.githubusercontent.com/41438361/89494606-79df7800-d7f1-11ea-9354-de02f60aeca5.png)
+
+### Loops
+
+`.SetLoops(int loops, LoopType loopType = LoopType.Restart) : 변환을 반복하는 기능`
+
+1. loops : 반복 회수 = -1이면 무한루프
+2. loopType : 반복 형태
+
+`box.DOLocalMoveX(200, 1).SetLoops(-1, LoopType.Restart);`
+
+![7](https://user-images.githubusercontent.com/41438361/89494710-b7dc9c00-d7f1-11ea-8e42-0ed3bb86748f.gif)
+
+|LoopType|
+|---------|
+|Incremental|종료된 시점을 시작 지점으로 모션이 다시 시작(연속)|
+|Restart|처음으로 되돌아가서 다시 시작|
+|Yoyo|실행 된 모션이 되감기 되며 다시 시작(반복 횟수는 돌아가는 모션까지 포함해야 함)|
+
+### Callbacks
+
+모션의 특정 상황에서 원하는 함수를 호출하는 기능(모션 시작, 종료 등)
+
+![8](https://user-images.githubusercontent.com/41438361/89494835-fe31fb00-d7f1-11ea-8cd7-db5f79728686.png)
+
+*좀 더 유연하게 함수를 호출하고 싶을 때는 람다식을 활용하여 아래와 같이 사용한다*
+
+```C#
+myTween.OnComplete(()=>{
+   //ex) 트윈 종료 후 실행
+});
+```
+
+### 기타 설정/제어 함수
+
+```C#
+myTween.SetDelay(float 시간) //딜레이
+
+myTween.Play() //재생
+myTween.Pause() //일시정지
+myTween.Rewind() //초기화
+myTween.Restart() //재시작
+```
 
 
 
