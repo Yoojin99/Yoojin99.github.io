@@ -140,3 +140,84 @@ Public String, int, Float, bool 등과 같은 기본 데이터 타입은 별도�
 ![image](https://user-images.githubusercontent.com/41438361/89634185-ee90e000-d8df-11ea-9391-dad6d048017d.png)
 
 이걸 이용하면 사용자별로 게임에 필요한 변수들을 생성하고 받는데 좋다고 생각한다. 서버랑 연동해서 변수를 받는 법도 다음에 매니저님꼐 여쭤봐야겠다.
+
+사용하기 위한 코드는 다음과 같다.
+
+```C#
+using UnityEngine;
+using System.Collections;
+//serialized 데이터 저장을 위해 필요한 namespace
+using System;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
+
+public class GameController : MonoBehaviour{
+
+  public static float fTime; //A1 일반변수
+  public static int userLevel = 0; //A2 일반변수
+  
+  [Serializable] //B 직렬화 가능한 클래스
+  public class PlayerData{
+    public int userLevel;
+    public float fTime;
+  }
+  
+  void Start(){
+    LoadData();
+  }
+  
+  void Update(){
+    //F5 키를 누르면 저장함수 호출
+    if(Input.GetKeyDown(KeyCode.F5)){
+      SaveData();
+    }
+    
+    if(Input.GetKeyDown(KeyCode.F9)){
+      userLevel++;
+    }
+    
+    //fTime 계속 증가
+    fTime += Time.deltaTime;
+  }
+  
+  public void SaveData(){
+    BinaryFormatter bf = new BinaryFormatter();
+    FileStream file = File.Create(Application.persistentDataPath + "/playerInfo.dat");
+    
+    PlayerData data = new PlayerData();
+    
+    //A --> B에 할당
+    data.userLevel = userLevel;
+    data.fTime = fTime;
+    
+    //B 직렬화하여 파일에 담기
+    bf.Serialize(file, data);
+    file.Close();
+  }
+  
+  public void LoadData(){
+    BinaryFormatter bf = new BinaryFormatter();
+    FileStream file = File.Open(Application.persistentDataPath + "/playerInfo.dat", FileMode.Open);
+    
+    if(file != null && file.Length >0){
+      //파일 역직렬화하여 B에 담기
+      PlayerData data = (PlayerData)bf.Deserialize(file);
+      
+      //B-->A에 할당
+      userLevel = data.userLevel;
+      fTime = data.fTime;
+      
+      Debug.Log(userLevel);
+      Debug.Log(fTime);
+    }
+    
+    file.Close();
+  }
+}
+
+```
+
+
+
+
+
