@@ -257,6 +257,9 @@ Unity:
 소소:
   type: liquid
   path: /categories/soso/
+ReactNative:
+  type : liquid
+  path: /categories/ReactNative/
 
 # https://github.com/jekyll/jekyll-archives
 # jekyll-archives:
