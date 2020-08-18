@@ -58,6 +58,7 @@ React Native는 form controls부터 activity indicators까지 많은 핵심 요�
 [여기](https://reactnative.dev/docs/components-and-apis)에서 찾을 수 있다. 주로 사용되는 핵심 요소들은 아래와 같다.
 
 *나는 안드로이드 유저이기 때문에 안드로이드에 관한 것만 적도록 하겠다. iOS에 관한 것까지 확인하고 싶다면 [여기](https://reactnative.dev/docs/intro-react-native-components)에서 확인할 수 있다.*
+
 |React Native UI 요소들|안드로이드 View|Web Analog|설명|
 |----------------------|---------------|----------|----|
 |`<View>`|`<ViewGroup>`|non-scrolling `<div>`|flexbox, touch handling, 접근성 관리와 함께 레이아웃을 지원하는 컨테이너|
