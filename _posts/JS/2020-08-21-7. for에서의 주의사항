@@ -1,0 +1,45 @@
+---
+title:  "JavaScript - for문에서의 주의사항"
+excerpt: ""
+
+toc: true
+toc_sticky: true
+toc_label: "페이지 주요 목차"
+header:
+  teaser: 
+  
+  
+categories:
+  - JS
+  
+tags:
+  - 공부
+  - JavaScript
+  - let
+  
+last_modified_at: 
+---
+
+```javascript
+var obj = {
+  prop1 : 1,
+  prop2 : 2,
+  prop3 : 3
+}
+
+for(const prop in obj){
+  console.log(prop)
+}
+
+// prop -> prop1
+// prop -> prop2
+// prop -> prop3
+
+for(const i = 0; i < 5; i++){
+  console.log(i)
+}
+
+// 에러가 난다. 계속 i를 재할당하려고 해서 문제가 된다.
+```
+
+for in 문만 특이하다.
