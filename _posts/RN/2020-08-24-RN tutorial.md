@@ -59,7 +59,7 @@ const HelloWorldApp = () => {
 export default HelloWorldApp;
 ```
 
-`App.js` 파일에 위 코드를 붙여서 가지고 있는 기기로 확인할 수도 있고, 홈페이지 상의 web simulator를 통해 코드를 변경해서 확인도 가능하다.
+이 코드를 `App.js` 파일에 위 코드를 붙여서 가지고 있는 기기로 확인할 수도 있고, 홈페이지 상의 web simulator를 통해 코드를 변경해서 확인도 가능하다.
 
 ## 어떻게 동작을 하는 것인가?
 
