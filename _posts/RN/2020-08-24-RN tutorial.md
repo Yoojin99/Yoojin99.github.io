@@ -39,7 +39,7 @@ React Native 앱의 기본적인 구조를 이해하려면, JSX, component, stat
 
 전통에 따라, 첫 빌드는 "Hello, world!"를 말하는 앱을 출력해 볼 것이다. ^^
 
-```react native
+```js
 import React from 'react';
 import {Text, View} from 'react-native';
 
