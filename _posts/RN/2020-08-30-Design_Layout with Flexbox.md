@@ -117,5 +117,68 @@ export default JustifyContentBasics;
 
 * `stretch` (기본값) : 컨테이너의 자식들을 컨테이너의 가로축의 `height`에 맞추기 위해 확장한다.
 * `flex-start` : 컨테이너의 자식들을 컨테이너의 가로축의 시작부분에 배치한다.
-* `flex-end` : 
+* `flex-end` : 컨테이너의 자식들을 컨테이너이 가로축의 마지막 부분에 배치한다.
+* `center` : 컨테이너의 자식들을 컨테이너의 가로축의 중심부분에 배치한다.
+* `baseline` : 일반적인 baseline을 따라 자식들을 배치한다. 각각의 자식들은 부모의 참조 baseline이 되도록 설정될 수 있다.
+
+`stretch` 가 효과적으로 작동하기 위해, 자식들은 보조축에 대한 고정적인 수치를 가지면 안된다. 아래의 예제에서는 `alignItems: stretch`는 `width:50`이 지워지기 전까지 아무런 동작도 하지 않는다.
+
+```js
+import React from 'react';
+import { View } from 'react-native';
+
+const AlignItemsBasics = () => {
+    return (
+      // Try setting `alignItems` to 'flex-start'
+      // Try setting `justifyContent` to `flex-end`.
+      // Try setting `flexDirection` to `row`.
+      <View style={{
+        flex: 1,
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'stretch',
+      }}>
+        <View style={{width: 50, height: 50, backgroundColor: 'powderblue'}} />
+        <View style={{height: 50, backgroundColor: 'skyblue'}} />
+        <View style={{height: 100, backgroundColor: 'steelblue'}} />
+      </View>
+    );
+};
+
+export default AlignItemsBasics;
+```
+
+![image](https://user-images.githubusercontent.com/41438361/91659751-d857f780-eb0c-11ea-8239-6a4bb0deca83.png)
+
+## Align Self
+
+`alignSelf`는 `alignItems`와 같은 효과와 옵션을 가지고 있지만 컨테이너에 있는 자식들에 영향을 미치는 것 말고 이거를 특정 자식에 대해 property를 바꿀 수 있다. `alignSelf`는 `alignItems`로 부모의 옵션을 덮어씌운다.
+
+![image](https://user-images.githubusercontent.com/41438361/91659797-1d7c2980-eb0d-11ea-8a5a-f955c5b7bf66.png)
+
+## Align Content
+
+alignContent는 가로축의 분포를 결정짓는다. 이거는 아이템들이 `flexWrap`을 사용하는 많은 줄들로 둘러쌓였을 경우 효과가 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/91659845-587e5d00-eb0d-11ea-8f36-ef147b76f7a2.png)
+
+## Flex Wrap
+
+flexWrap property는 컨테이너에 적용되며 자식이 컨테이너의 주축보다 사이즈가 커질경우를 컨트롤 한다. 디폴트로, 자식들은 한줄(요소들을 줄일 수 있다.)로 들어가도록 되어있다. 만약 wrapping이 되어있다면, 아이템들은 주축을 따라 여러줄로 구성될 수 있다.
+
+줄들을 감쌀때, `alignContent`는 줄들이 컨테이너에 어떻게 위치하는지 사용될 수 있다. 
+
+![image](https://user-images.githubusercontent.com/41438361/91659906-b743d680-eb0d-11ea-8d9c-90efbe7fc7dd.png)
+
+## Flex Basis, Grow, and Shrink
+
+## Width and Height
+
+## Absolute & Relative Layout
+
+
+
+
+
+
 
