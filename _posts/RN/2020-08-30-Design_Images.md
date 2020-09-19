@@ -130,7 +130,7 @@ iOS의 App Transport Security 요구사항을 만족시키기 위해 https를 �
 <Image source={{uri: '이미지 url'}} style={{width: 400, height: 400}} />
 
 // BAD
-<Image source={{uri: 'https://reactjs.org/logo-og.png'}} />
+<Image source={{uri: '이미지 url'}} />
 ```
 
 ### Network Request for Images
