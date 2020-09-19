@@ -125,14 +125,6 @@ Xcode aaset catalog나 안드로이드 drawable 폴더에 포함된 이미지는
 동적으로 로딩하고 싶을 것이다. 정적인 리소스들과는 다르게, 이미지의 치수를 직접 설정해야 한다.
 iOS의 App Transport Security 요구사항을 만족시키기 위해 https를 사용하는 것이 추천된다.
 
-```js
-// GOOD
-<Image source={{uri: '이미지 url'}} style={{width: 400, height: 400}} />
-
-// BAD
-<Image source={{uri: '이미지 url'}} />
-```
-
 ### Network Request for Images
 
 만약 http-verb를 사용하고 싶다면, 소스 객체에서 이런 property들을 설정함으로써 이미지 요청에 헤더나 바디를 추가시킨다.
