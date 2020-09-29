@@ -5,7 +5,7 @@ excerpt: ""
 categories:
   - soso
 tags:
-  - image upload
+  - Github
 ---
 
 하나의 프로젝트로 여러 명이 협업할 때 보통 Github를 많이 사용한다. Turtoise svn, gitlab도 사용해봤지만 github가 가장 사용성이 좋은 것 같다.
