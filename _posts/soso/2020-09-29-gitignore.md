@@ -1,5 +1,5 @@
 ---
-title:  "Github - ,gitignore github 특정 file push 제외시키기"
+title:  "Github - `.gitignore` github 특정 file push 제외시키기"
 
 categories:
   - soso
@@ -19,7 +19,7 @@ Github에 파일들을 올릴 때 보안상의 문제로 주의해서 올려야 
 
 만드는 방법은 아주아주 간단하다.
 
-1. 프로젝트 파일에 `.gitignore` 이라는 파일을 만든다.
+1. 프로젝트 파일에 `.gitignore` 이라는 파일을 만든다. 이 파일은 항상 디렉토리의 최상단 위치에 있어야 한다.
 2. 파일에 제외하고 싶은 파일 형식, 혹은 이름을 적는다.
 
 예를 들어서 `.gitignore`파일에 `credentials.json`이라고 적으면, push할 때 `credentials.json` 파일은 업로드 되지 않는 것이다.
