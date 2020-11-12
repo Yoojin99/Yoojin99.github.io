@@ -150,10 +150,48 @@ sudo systemctl restart apache2
 를 입력해서 apache 서버를 재시작해주자. 이제 http://A 나 https://A로 접속하면 https://B로 접속이 가능해진다! (http://B 에서 https://B는 이미 redirect가 되어 있게 설정되어 있었다.)
 
 
+### https://www.A to https://B
 
+하다보니 문제가 또 생겼다. https://www.A 처럼 www가 붙은 주소에서 https://B 로 전환이 되지 않는다.
 
+http://www.A 에서 http://B 는 잘 이동된다.
 
+이거는 위에서도 보았듯이 `/etc/apache2/sites-available/000-default.conf`에 아래처럼만 되어 있었던 걸 하나 더 추가해서
 
+![image](https://user-images.githubusercontent.com/41438361/98902698-8f072980-24f9-11eb-9a50-e2bb4e7ed3dd.png)
 
+아래와 같이 하나의 virtualhost를 하나 더 만들어 주면 된다. 얘도 마찬가지로 80포트에서 listen하고 있어서 http 요청을 처리해 줄 수 있다.
 
+![image](https://user-images.githubusercontent.com/41438361/98902904-e73e2b80-24f9-11eb-94bd-9445f0fdeaac.png)
 
+하지만 https 요청의 경우는 단순히 이렇게 ssl config 파일을 바꿔서 해결되지 않는다. ssl 인증서를 expand 하거나 www.어쩌구 에 대한 인증서를 추가로 받아야 하는데, 새로 받기는 귀찮다.
+
+그래서 여기에서는 ssl 인증서를 expand 하는 방식으로 이 문제를 해결하는 방법을 소개한다. 그 전에, 가동되고 있는 apache 서버가 있는데 expand 명령어를 입력할 경우 
+
+```
+~ problem binding to port 80 could not bind to ipv4 or ipv6 ~
+```
+
+이런 에러가 뜬다. 이미 해당 포트를 다른 애가 사용하고 있는 것이다. 이럴 경우 아래의 명령어를 쳐서 apache server 를 죽여서 해결해도 되고, 혹은 해당 포트에서 돌고 있는 애를 `netstat -ln` 명령어로 확인한 후에 죽여도 된다.
+
+```
+sudo systemctl stop apache2
+```
+
+이제 ssl 인증서를 expand 해보자.
+
+```
+sudo certbot certonly --standalone -d 처음입력했던도메인 -d www.어쩌구(새로 인증서를 발급받고 싶은거)
+```
+
+위의 명령어를 치고, e를 눌러주면 성공했다고 뜬다.
+
+간혹 아래와 같은 메세지가 뜰 수 있다. 아래의 메세지를 보면 www.~어쩌구에 대한 dns 주소의 CNAME을 설정해주지 않아서 그렇다. 
+
+```
+Failed authorisation procedure. www~~ : DNS problem: NXDOMAIN looking up A for ~~ - check that a DNS record exists for this domain 
+```
+
+CNAME은 쉽게 별명이라고 생각하면 된다.
+
+Naver.com 과 www.Naver.com 이 같듯, 이 두개의 주소가 같은 곳을 가리키는 것이다. 따라서 우리는 www.어쩌구의 CNAME을 지정해서 www가 없는 어쩌구 주소와 같은 주소를 가리키게 하면 된느 것이다. 아니면 A type record를 설정하면 되는데 이 방법은 시도해보지 않아 자세히는 알지 못한다. 
