@@ -115,4 +115,200 @@ new를 통해 instance를 만들었기 때문에 동적메모리 할당이 이�
 
 `PurgeInstance` 메서드는 중간에 싱글톤 객체를 해제하고 싶을 때 호출하면 된다. 예를 들어 게임에서 player를 싱글톤으로 생성하면 한 사이클을 마쳤을 때 중간에 해제하고 다시 생성할 수도 있다.
 
+다시 맨 위의 코드로 돌아가 보겠다.
+
+```c++
+class FileSystem {
+  public:
+    static FileSystem& instance() {
+      // 게으른 초기화
+      if(instance_ NULL) {
+        instance_ = new FileSystem();
+      }
+      
+      return *instance_;
+    }
+  private:
+    FileSystem() {}
+    static FileSystem* instance_;
+}
+```
+
+위에서 봤던 늦은 초기화 == 게으른 초기화임을 알 수 있다.
+
+위 코드에서 `instance_` 정적 멤버 변수는 클래스 인스턴스를 저장한다. ㅅㅇ성자가 private이어서 밖에서는 생성할 수 없다. `instance()` 정적 메서드는 **코드 어디에서나 싱글턴 인스턴스에 접근할 수 있게 하고, 싱글턴을 실제 필요할때까지 인스턴스 초기화를 미루는 역할(게으른 초기화)**도 한다.
+
+아래 같이도 코드를 짤 수 있다.
+
+```cpp
+class FileSystem {
+  public:
+    static FileSystem& instance() {
+      static FileSystem* instance = new FileSystem();
+      return *instance;
+    }
+    
+  private:
+    FileSystem() {}
+}
+```
+
+### 사용하는 이유? 
+
+1. 한 번도 사용하지 않는다면 아예 인스턴스를 생성하지 않는다.
+2. 런타임에 초기화 된다. 
+  정적 멤버 변수는 자동 초기화 되는 문제가 있다. 
+3. 싱글턴을 상속할 수 있다.
+  파일 시스템 래퍼가 크로스 플랫폼을 지원해야 한다면 추상 인터페이스를 만든 후 플랫폼마다 구체 클래스를 만들면 된다.
+  
+상위 클래스를 아래와 같이 만든다.
+
+```cpp
+class FileSystem {
+  public:
+    virtual ~FileSystem(){}
+    virtual char* readFile(char* path) = 0;
+    virtual void writeFile(char* path, char* contents) = 0;
+};
+```
+
+그리고 플랫폼 별로 아래와 같이 하위 클래스를 정의한다.
+
+```cpp
+class PS3FileSystem : public FileSystem {
+  public:
+    virtual char* readFile(char* path) { // 소니의 파일 IO API를 사용한다... } 
+    virtual void writeFile(char* path, char* contents) { // 소니의 파일 IO API를 사용한다... }
+}
+
+class WIIFileSystem : public FileSystem {
+  public:
+    virtual char* readFile(char* path) { // 닌텐도의 파일 IO API를 사용한다... } 
+    virtual void writeFile(char* path, char* contents) { // 닌텐도의 파일 IO API를 사용한다... }
+}
+```
+
+그리고 FileSystem 클래스를 싱글턴으로 만든다.
+
+```cpp
+class FileSystem {
+  public:
+    static FileSystem& instance();
+    
+    virtual ~FileSystem(){}
+    virtual char* readFile(char* path) = 0;
+    virtual void writeFile(char* path, char* contents) = 0;
+    
+  protected:
+    FileSystem(){}
+};
+```
+
+이제 중요한 인스턴스를 생성하는 부분이다.
+
+```cpp
+FileSystem& FileSystem::Instance() {
+  #if PLATFROM == PLAYSTATION3 
+    static FileSystem* instance = new PS3FileSystem(); 
+  #elif PLATFORM == WII 
+    static FileSystem* instance = new WiiFileSystem(); 
+  #endif 
+    return *instance;
+}
+```
+
+위와 같이 간단하게 시스템에 맞는 파일 시스템 객체를 만들게 할 수 있다. FileSystem::Instance()를 통해서 파일 시스템에 접근하기 때문에 플랫폼 전용 코드는 FileSystem 클래스 내부에 숨겨놓ㅇ르 수 있다.
+
+### 싱글턴이 문제인 이유
+
+1. 전역 변수나 다름없다. 전역 변수는 코드를 이해하기 힘들게 한다. 
+2. 전역 변수는 커플링을 조장한다. 인스턴스에 대한 접근을 통제함으로써 커플링을 통제할 수 있다. (커플링 : 어떤 모듈을 변경할 때 다른 모듈의 변경이 요구된다면 커플링이 존재하는 것이다. 중복은 커플링을 항상 수반한다. 또한 어떤 모듈이 다른 모듈의 코드를 사용할 때 발생한다.)
+3. 전역 변수는 멀티 스레딩같은 동시성 프로그래밍에 알맞지 않다. 
+4. 게으른 초기화는 제어할 수 없다. : 게으른 초기화는 좋은 방법이지만 게임은 다르다. 시스템을 초기화할 때 메모리 할당, 리소스 로딩 등 할 일이 많아 시간이 많이 소요될 수 있다. 이에 많은 시간이 소요된다면 초기화 시점을 제어해야 한다. 처음 로딩을 할 때 게으른 초기화를 하게 만들면 전투 도중 초기화가 시작되는 바람에 버벅되는 현상이 발생한다.
+
+### 대안 - 클래스가 꼭 필요한가?
+
+게임 코드의 싱글턴 클래스 중에는 애매하게 다른 객체 관리용으로만 존재하는 '관리자'가 많다. 
+
+### 오직 한 개의 클래스 인스턴스만 갖도록 보장하기
+
+누구나 전역에서 클래스 인스턴스에 접근할 수 있게 되면 구조가 취야개진다
+
+전역 접근 없이 클래스 인스턴스만 한 개로 보장할 수 있는 방법이 몇가지가 있다.
+
+```cpp
+class FileSystem {
+  public:
+    FileSystem() {
+      assert(!instantiated_); //인수 값이 참이면 아무것도 안하지만 거짓이면 그 자리에서 코드를 중지한다.
+      instantiated_ = true;
+    }
+    
+    ~~FileSystem() {
+      instantiated_ = false;
+    }
+    
+  private:
+    static bool instantiated_;
+};
+
+bool FileSystem::instantiated_ = false;
+```
+
+### 인스턴스에 쉽게 접근하기
+
+쉬운 접근성은 싱글턴을선택하는 큰 이유다. 싱글턴을 사용하면 여러 곳에서 사용해야 하는 ㄱㄱ체에 쉽게 접근할 수 있다.
+
+1. 상위 클래슬부터 얻기
+  몬스터나 다른 게임 내 객체가 상속받는 GameObject라는 상위 클래스가 있다. 많은 클래스들이 이를 상속해서 GameObject 상위 클래스에 접근할 수 있다.
+  
+  아래의 코드는 GameObject를 상속받은 곳에서만 getLog()를 통해 로그 객체에 접근할 수 있다.
+  
+  ```cpp
+  class GameObject {
+    protected:
+      Log& getLog() {return log_;}
+      
+    private:
+      static Log& log;
+  };
+  
+  class Enemy: public GameObject {
+    void doSth() {
+      getLog().write("log this.");
+    }
+  }
+  ```
+2. 이미 전역인 객체로부터 얻기
+
+log, filesystem, audioplayer를 각각 싱글턴으로 만드는 대신 아래 코드와 같이 짠다.
+
+```cpp
+class Game {
+  public:
+    static Game& instance() {return instance_;}
+    
+    Log& getLog {return *log_}
+    FileSystem& getFileSystem() {return *fileSystem_;}
+    AudioPlayer& getAudioPlayer() {return *audioPlayer_;}
+    
+  private:
+    static Game instance_;
+    Log* log_;
+    FileSystem* fileSystem_;
+    AudioPlayer* audioPlayer_;
+}
+```
+
+이제 Game 클래스 하나만 전역에서 접근할 수 있다. 다른 시스템에 접근하려면 알와 같이 함수를 호출하면 된다.
+
+```cpp
+Game::Instance().getAudioPlayer().play(Music_3);
+```
+
+
+[출처](https://boycoding.tistory.com/109)
+
+
+
 
