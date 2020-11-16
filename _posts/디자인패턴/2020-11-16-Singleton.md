@@ -76,6 +76,11 @@ class Singleton {
 Singleton* Singleton::instance = nullptr;
 ```
 
+외부에서 객체를 생성할 수 없도록 생성자를 private으로 선언했다. 객체 생성에 대한 관리를 내부적으로 하겠다는 뜻이다.
+
+이러면 외부에서 singleton 객체를 생성할 수 없으므로, 미리 생성된 자신을 반환할 수 있도록 `GetInstance()` 메서드를 정의한다. 여기서 static으로 정의 된 것에 주의해야 한다. 생성자를 private으로 선언했기때문에 객체를 생성할 수 없으므로 getInstance() 메서드가 클래스에 정의되도록 static 제어자를 사용한다. 
+
+
 private 생성자와 GetInstance 메소드를 통해 자기 자신을 반환한다. 하지만 메모리 관련 문제가 있다. static 멤버로 instance를 갖고 있기 때문에 data 영역에 할당되고 메모리를 계속 차지하고 있다.
 
 또한 다른 전역 객체의 생성자에서 참조할 경우 문제가 발생할 수도 있다. 이런 현상이 발생하는 이유는 c++에서는 전역인 애들의 생성 순서가 명확히 정해져 있지 않아서 그렇다.
@@ -308,6 +313,7 @@ Game::Instance().getAudioPlayer().play(Music_3);
 
 
 [출처](https://boycoding.tistory.com/109)
+[출처](https://victorydntmd.tistory.com/293)
 
 
 
