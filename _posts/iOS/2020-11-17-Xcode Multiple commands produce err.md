@@ -30,3 +30,5 @@ Project>Targets 에 있는 target을 클릭해주고 Build Phases에서 `Copy Bu
 
 나같은 경우는 `Googleplay-info.~~` 파일이 로컬 파일 디렉토리에도 존재하고 저 copy bundle resources에서도 존재해서 copy bundle resources에 있는 것을 
 삭제해줬더니 에러가 없어졌다.
+
+참고한 링크 주소이다. https://github.com/oblador/react-native-vector-icons/issues/1074
