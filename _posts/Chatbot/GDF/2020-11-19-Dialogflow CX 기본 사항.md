@@ -100,6 +100,76 @@ Fulfillment는 다음의 것을 포함할 수 있다:
 
 Agent의 턴에서, 각각 응답 메세지를 만들 수 있는 fulfillment들을 여러개 부를 수 있다(어떤 때는 이것을 하는 것이 필수적일 수 있다). Dialogflow는 이 응답들을 response queue에 유지한다. Agent의 턴이 끝나면, Dialogflow는 이 정렬된 응답들을 사용자에게 보낸다.
 
+## State Handler
+
+간단히 handler라고 불리는 State handler들은 사용자에게 응답할 메세지를 만들거나 현재 페이지의 상태를 변경해서 대화를 통제한다. 각 대화 턴에서, 
+handler들은 평가되고 세션에 영향을 줄 수 있다. Handler들은 세개의 일반적인 데이터 타입을 가진다.
+
+|Handler requirements|이것은 세션에 영향을 주기 위해 핸들러가 충족해야 하는 요구사항이다. 핸들러는 요구사항을 충족하고 세션에 영향을 줬을 때 called되었다고 말한다.|
+|Handler fulfillment|만약 핸들러가 불러졌다면, 사용자에게 답을 할 응답을 만들기 위해 선택적으로 fulfillment가 사용될 수 있다. 이런 응답들은 정적 에이전트 데이터나 웹훅 서비스에 의해 동적으로 가져와진 형태로 정의될 수 있다.|
+|Handler trasition target|핸들러가 불러졌다면, 현재 페이지를 바꾸기 위해 선택적 transition target이 사용될 수 있다. 다음 페이지는 flow start page가 현재 활성화된 플로우가 동작하는 페이지만 올 수 있다.|
+
+아래는 handler requirements 를 달리 갖고 있는 두 타입의 상태 핸들러이다.
+
+|Routes|Routes는 사용자 입력이 intent와 일치하거나 세션 상태의 어떤 조건과 일치할 때 불려진다. intent requirement를 갖고 있는 route를 intent route라고도 부른다. Condition requirement만 갖고 있는 route를 condition route라고도 부른다.|
+|Event handlers|Event handler들은 이벤트가 발생했을때 불려진다. 이미 내장된 이벤트들은 예상치못한 사용자의 입력이 들어왔거나, 웹훅 에러가 발생했을 때 발생한다. 대화 밖에서 어떤 일이 발생했을 때 불러올 커스텀 이벤트도 정의할 수 있다.|
+
+아래는 상태 핸들러를 작동시키기 위한 세가지 단계이다.
+
+1. Scope
+  handler는 세션에 영향을 미치기 위해 무조건 scope안에 있어야 한다.
+2. Evaluation
+  스콥에 있는 각 핸들러들은 우선순위가 있다. 만약 핸들러 요구사항이 충족되었을 경우에 evalutation을 넘긴다.
+3. Call
+  만약 스콥에 있는 핸들러가 evaluation을 넘겼다면, 이것은 called된 것이다. 
+  
+## Console
+
+Dialogflow는 Dialogflow CX Console이라는 웹 유저 인터페이스를 제공한다. 이 콘솔을 이용해서 CX agent들을 만들고, 빌드하고, 테스트해볼 수 있다.
+
+CX Console은 ES Console과 비슷한 목적을 갖고 있지만, CS Console 유저 인터페이스가 더 시각적으로 보기 좋다. 각 플로우를 대화 상태 머신으로 그래프를 그려 복잡한 agent들 디자인하고 이해하기 쉽게 만든다.
+
+Dialogflow CX Console은 GCP 콘솔과는 다르다. Dilogflow CX Console은 Dialogflow CX agent를 관리하기 위한 것이고, GCP console은 GCP 특정 다이얼로그 플로우 CX setting과 다른 GCP 자원들을 관리하기 위해 사용된다.
+
+대부분의 상황에서 Dialogflow CX Console를 agent를 만들기 위해 사용하지만, 더 복잡한 시나리오를 위한 agent를 만들기 위해 Dialogflow CX API를 사용할 수도 있다.
+
+## 사용자의 API와의 상호작용
+
+CX를 위한 API를 사용하는 것은 ES를 위한 API를 사용하는 것과 비슷하지만, 몇 resource path과 자원이 새로운 타입, 함수, 필드를 수용하기 위해 수정되었다.
+
+시스템은 아래의 것을 다뤄야 한다.
+
+* Dialogflow CX는 현재 제한된 수의 integration만을 지원하므로, 시스템은 사용자와 직접적으로 소통할 수 있는 유저 인터페이스가 필요할 것이다.
+* 사용자 입력을 API에 보내기 위해 DialogflowAPI를 각 대화 턴마다 불러야 한다.
+* agent 응답이 정적이지 않다면, webhook-enabled fulfillment를 다루기 위해 웹훅 서비스를 호스팅해야 할 것이다.
+
+아래의 다이어그램은 세션의 한 대화 턴에서 이뤄지는 단계를 보여준다.
+
+![스크린샷 2020-11-20 오전 11 17 34](https://user-images.githubusercontent.com/41438361/99749499-03f1e900-2b22-11eb-8598-6922a011076d.png)
+
+1. 끝단의 사용자가 어떤 것을 타이핑하거나 말한다(end-user input)
+2. 사용자 인터페이스 시스템은 입력을 받고 그것을 detect intent request로 Dialogflow API에 넘긴다.
+3. Dialogflow API는 detect intent request를 받는다. 입력을 intent나 form parameter와 매칭시키고, 파라미터를 필요할 경우 설정하며, 세션 상태를 업데이트 한다. 만약 webhook-enabled fulfillment를 부르는 것이 필요하다면, 웹훅 서비스에 웹훅 요청을 보낸다. 아니라면 스텝 6로 바로 간다.
+4. 웹훅 서비스는 웹훅 요청을 받는다. 서비스는 외부 API를 부르거나 데이터베이스를 쿼리하거나 업데이트 하는 것과 같은 행동들을 필요할 경우에 수행한다.
+5. 웹훅 서비스는 응답을 만들고 Dialogflow에 웹훅 응답을 전송한다.
+6. Dialogflow는 detect intent response를 만든다. 만약 웹훅이 불러졌다면, 웹훅 응답에 제공되는 응답을 사용한다. 만약 ㅏ움런 웹훅이 불러지지 않아다면, 에이전트에 이미 정적으로 만들어져 있는 응답을 사용한다. 다이얼로그플로우는 유저 인터페이스 시스템에 detect intent response를 보낸다.
+7. 유저인터페이스 시스템은 detect intent response를 탐지하고 이것을 텍스트나 오디오 응답으로 사용자에게 보낸다.
+8. 끝단의 사용자는 응답을 보거나 듣는다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
