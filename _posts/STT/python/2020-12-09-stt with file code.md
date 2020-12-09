@@ -72,8 +72,7 @@ for result in response.results:
 2. rate가 다른 경우는 코드를 실행시키고 나서 확인 후 고칠 수 있다. 이게 무슨 말이냐면
   ![스크린샷 2020-12-09 오후 2 11 20](https://user-images.githubusercontent.com/41438361/101587916-8c302380-3a28-11eb-9fd8-eff12d221eef.png)
   
-  위의 스샷처럼 "sample_rate_hertz (48000) in RecognitionConfig must either be omitted or match the value in the WAV header ( 44100)."과 같은 에러 메세지가 뜨는 경우에는 오디오 파일의 
-  rate_hertz가 44100인데 내가 코드 상으로 48000으로 설정했을 경우이다. 그래서 에러 메세지를 보고 `sample_rate_hertz`의 값을 조정해주면 된다.
+  위의 스샷처럼 "sample_rate_hertz (48000) in RecognitionConfig must either be omitted or match the value in the WAV header ( 44100)."과 같은 에러 메세지가 뜨는 경우에는 오디오   파일의 rate_hertz가 44100인데 내가 코드 상으로 48000으로 설정했을 경우이다. 그래서 에러 메세지를 보고 `sample_rate_hertz`의 값을 조정해주면 된다.
 3. language_code는 한국어일 경우 "ko-KR"로 바꿔주면 된다.
 4. 이 경우도 에러 메세지를 통해 확인 후 수정할 수 있다.
   ![스크린샷 2020-12-09 오후 2 15 55](https://user-images.githubusercontent.com/41438361/101588155-15475a80-3a29-11eb-8e93-fe6c032dab50.png)
