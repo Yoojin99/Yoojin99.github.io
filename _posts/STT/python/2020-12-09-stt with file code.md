@@ -70,15 +70,18 @@ for result in response.results:
 1. 위에 첨부한 빠른 시작 페이지에서처럼 `export GOOGLE_APPLICATION_CREDENTIALS="[PATH]"`커맨드를 통해서 직접 커맨드를 통해 인증 정보를 넣거나 코드 상으로 명시해준다. 나는 매번 커맨드를 통해 설정하기가 귀
   귀찮아서 코드 상으로 명시했다.(참고로 json파일-인증정보 는 미리 google cloud console에서 다운받아서 로컬에 저장해놔야 한다.)
 2. rate가 다른 경우는 코드를 실행시키고 나서 확인 후 고칠 수 있다. 이게 무슨 말이냐면
+
   ![스크린샷 2020-12-09 오후 2 11 20](https://user-images.githubusercontent.com/41438361/101587916-8c302380-3a28-11eb-9fd8-eff12d221eef.png)
   
   위의 스샷처럼 "sample_rate_hertz (48000) in RecognitionConfig must either be omitted or match the value in the WAV header ( 44100)."과 같은 에러 메세지가 뜨는 경우에는 오디오   파일의 rate_hertz가 44100인데 내가 코드 상으로 48000으로 설정했을 경우이다. 그래서 에러 메세지를 보고 `sample_rate_hertz`의 값을 조정해주면 된다.
+
 3. language_code는 한국어일 경우 "ko-KR"로 바꿔주면 된다.
+
 4. 이 경우도 에러 메세지를 통해 확인 후 수정할 수 있다.
+
   ![스크린샷 2020-12-09 오후 2 15 55](https://user-images.githubusercontent.com/41438361/101588155-15475a80-3a29-11eb-8e93-fe6c032dab50.png)
   
-  위와 같이 메세지가 뜨면 코드 상에서 내가 single channel을 사용한다고(위에 첨부한 코드 같은 경우이다) 해놨는데, 오디오 파일에서 두 개의 채널을 요구하는 경우이다. 이럴 경우 `speech.RecognitionConfig`안에 
-  channel 파라미터의 값을 조정해주면 된다. 아래에 내가 수정한 코드처럼 수정하면 된다.
+  위와 같이 메세지가 뜨면 코드 상에서 내가 single channel을 사용한다고(위에 첨부한 코드 같은 경우이다) 해놨는데, 오디오 파일에서 두 개의 채널을 요구하는 경우이다. 이럴 경우 `speech.RecognitionConfig`   안에 channel 파라미터의 값을 조정해주면 된다. 아래에 내가 수정한 코드처럼 수정하면 된다.
   
   
 내가 최종적으로 수정한 코드는 다음과 같다.
