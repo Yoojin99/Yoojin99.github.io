@@ -1,8 +1,8 @@
 ---
 layout: tag-blog
 title: Microsoft Azure
-slug: chatbot-ma
-category: chatbot
+slug: cb-ma
+category: cb
 menu: false
 order: 2
 ---

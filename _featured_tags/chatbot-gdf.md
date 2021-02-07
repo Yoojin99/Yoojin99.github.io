@@ -1,8 +1,8 @@
 ---
 layout: tag-blog
 title: GDF
-slug: chatbot-gdf
-category: chatbot
+slug: cb-gdf
+category: cb
 menu: false
 order: 1
 ---
