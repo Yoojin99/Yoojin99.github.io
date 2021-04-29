@@ -54,7 +54,7 @@ func changeBasicInfo(_ info: SomeInfoStruct) {
 
 ### 추가
 
-위에서 오류나던 코드에서 SomeInfoStruct 부분을 참조 타입의 클래스로 바꾸면 에러가 나지 않는다. 그 이유는 **값 타입을 함수에 파라미터로 넘겨줄 때, 해당 파라미터들은 상수이므로 변경될 수 없다.**
+위에서 오류나던 코드에서 SomeInfoStruct 부분을 참조 타입의 클래스로 바꾸면 에러가 나지 않는다. 헷갈리지 말아야 하는게, 함수의 파라미터는 모두 상수로 취급되는 것이 맞다. 다만 내부에서 전달된 변수의 파라미터에 접근하는 것이기 때문에 아래 코드에서는 에러가 나지 않는 것이다.
 
 ```swift
 func changeBasicInfo(_ info: SomeClass) {
@@ -62,6 +62,20 @@ func changeBasicInfo(_ info: SomeClass) {
 }
 ```
 
+아래와 같이 파라미터로 전달된 애를 바꾸지 못한다. `let info`로 상수취급되고 있기 때문에 info 자체를 바꾸지는 못하고 `info.age`는 바꿀 수 있는 것이다.
+
+```swift
+func changeBasicInfo(_ info: SomeClass) {
+  info = SomeClass() // Cannot assign to value: 'info' is a 'let' constant
+}
+```
+
+클래스의 인스턴스는 참조 타입이므로 let으로 선언되어도 내부의 프로퍼티는 바꿀 수 있는 것이 위에 적용된 것이다. 즉 참조 타입은 상수로 선언되었을 때 해당 상수가 가리키는 메모리 주소가 바뀌지 않기만 하면 된다고 생각하면 된다.
+
+```swift
+let info = SomeClass()
+info.age = 1 // 가능
+```
 
 참고
 
