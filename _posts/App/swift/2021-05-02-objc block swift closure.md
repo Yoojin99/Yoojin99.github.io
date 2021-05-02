@@ -23,7 +23,7 @@ Apple의 "Using Swift with Cocoa and Objective-C" iBook에서
 > Swift의 클로저와 obj-c의 블록은 비교가 상호 호환이 가능해서, Swift의 클로저를 Object-C의 블럭을 기대하는 메서드에 넘겨줄 수 있다.
 > Swift의 클로저와 함수는 같은 타입을 가지고 있기 때문에, Swift 함수의 이름을 전달해도 된다.
 > 클로저는 블럭과 마찬가지로 비슷한 의미의 capture(값 획득)을 가지고 있지만 한 부분에서 다르다 : 변수는 복사되기 보다는 변경이 가능하다.
-> 다른 말로, Objective-C의 블럭의 동작은 Swift에서 변수의 기본적인 동작과 동일하다.
+> 다른 말로, Objective-C의 `__block` 의 동작은 Swift에서 변수의 기본적인 동작과 동일하다.
 
 라고 나와있다는데 아직도 무슨 말인지 헷갈린다. 잘 이해는 안되지만 클로저와 블럭은 비슷하고, 값 획득에서 무언가 차이가 있다는 말인것 같다.
 
@@ -74,7 +74,18 @@ testBlock();
 // Prints "Integer is: 42"
 ```
 
-이를 reference copy로 
+이를 reference copy로  변경하려면 `__block` 키워드를 capture할 변수 선언시에 명시해주면 된다.
+
+```objective-c
+__block int anInteger = 42;
+void (^testBlock)(void) = ^{
+     // anInteger는 caputure되는 순간 reference copy됨
+    NSLog(@"Integer is: %i", anInteger);
+};
+anInteger = 84;
+testBlock();
+// Prints "Integer is: 84"
+```
 
 
 출처
