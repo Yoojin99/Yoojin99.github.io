@@ -29,7 +29,84 @@ class ViewModel {
 }
 ```
 
-위 코드에서 볼 
+위 코드에서 볼 수 있듯이 completion은 함수의 실행이 종료되기 전에 실행되지 않기 때문에 함수 밖에서(escaping) 실행되는 클로저다.
+
+### escaping
+
+`@escaping`이 붙어 있어도 non-escaping 클로저를 인자를 넣을 수 있다.
+
+```swift
+func runClosure(closure: @escaping () -> Void) {
+  closure()
+}
+```
+
+하지만 escaping 클로저를 `@escaping` 없이 사용하면 컴파일 에러가 난다.
+
+이렇게 escaping, non-escaping 클로저를 나눠서 사용하는 이유는 컴파일러의 퍼포먼스와 최적화 때문이다. non-escaping 클로저는 클로저의 실행이 언제 종료되는지 알기 때문에, 때에 따라 클로저에서 사용하는 특정 객체에 대한 retain, release 등의 처리를 생략해 객체의 라이프싸이클을 효율적으로 관리할 수 있다.
+
+하지만 escaping 클로저는 함수 밖에서 실행되기 때문에 클로저가 함수 밖에서도 적절히 실행되는 것을 보장하기 위해 클로저에서 사용하는 객체에 대한 추가적인
+reference cycle 관리 등을 해줘야 한다. 이 부분이 컴팡일러의 퍼포먼스와 최적화에 영향을 끼치기 때문에 swift는 필요할 때만 escaping 클로저를 사용하도록 해놓았다.
+
+### self
+
+`self`를 언급하는 escaping closure는 `self`가 클래스의 인스턴스를 가리킬 때 특별히 주의해야 한다. Escaping closure에서 `self`를 capturing 하는 것은 강한 참조 사이클을 생성하기 쉽다. 
+
+일반적으로, 클로저는 클로저의 body 안에서 변수를 사용함으로써 값을 획득하지만, 이 경우에는 명시적으로 해줄 필요가 있다. 만약 `self`를 획득하고 싶다면, 사용할 때 `self`를 명시적으로 적어주거나 클로저의 획득 리스트에 `self`를 포함시켜야 한다. 명시적으로 `self`를 적으면 의도를 표현할 수 있고, 
+참조 사이클이 없는 것을 확인할 수 있게 리마인드 할 수도 있다. 예를 들어 아래 코드에서 `someFunctionWIthEscapingClosure(_:)`에 전달된
+클로저는 `self`를 명시적으로 적고 있다. 반대로, `someFUnctionWithNonescapingClosure(_:)`에 전달된 클로저는 nonescaping closure이므로 `self`를 암묵적으로 사용할 수 있다.
+
+```swift
+func someFunctionWithNonescapingClosure(closure: () -> Void) {
+    closure()
+}
+
+class SomeClass {
+    var x = 10
+    func doSomething() {
+        someFunctionWithEscapingClosure { self.x = 100 }
+        someFunctionWithNonescapingClosure { x = 200 }
+    }
+}
+
+let instance = SomeClass()
+instance.doSomething()
+print(instance.x)
+// Prints "200"
+
+completionHandlers.first?()
+print(instance.x)
+// Prints "100"
+```
+
+아래 코드는 `self`를 클로저의 획득 리스트에 포함시켜서 이를 획득하고, `self`를 암묵적으로 언급하는 코드다.
+
+```swift
+class SomeOtherClass {
+    var x = 10
+    func doSomething() {
+        someFunctionWithEscapingClosure { [self] in x = 100 }
+        someFunctionWithNonescapingClosure { x = 200 }
+    }
+}
+```
+
+만약 `self`가 구조체가 열거형의 인스턴스라면 항상 `self`를 암묵적으로 사용할 수 있다. 하지만, `self`가 구조첸나 열거형의 인스턴스일 때 `self`에 대한 변경가능한 참조는 획득하지 못한다. 구조체나 열거형은 공유되는 변경가능성을 허용하지 않는다.
+
+```swift
+struct SomeStruct {
+    var x = 10
+    mutating func doSomething() {
+        someFunctionWithNonescapingClosure { x = 200 }  // Ok
+        someFunctionWithEscapingClosure { x = 100 }     // Error
+    }
+}
+```
+
+위에서 `someFUnctionWithEscapingClosure`에서 에러가 난 이유는 mutating 메서드 안에서 `self`는 변경가능하기 때문에 에러가 난 것이다. 이거는
+클로저가 구조체에 대한 변경가능한 참조를 획득하지 못하는 규칙을 위반한다.
+
+### 
 
 클로저의 Escaping은 A 함수가 종료된 이후에 B 함수가 실행되도록 함수를 작성할 수 있다는 점에서 유용하다. 즉 **함수 사이에 실행 순서를 정할 수 있다.**
 함수의 실행 순서를 보장할 수 있는 것은 비동기 함수의 경우도 포함하기 때문에 중ㅇ하다. 서버에서 json 형식의 데이터를 가져와 화면에 이를 출력하는 것을 생각해보자.
