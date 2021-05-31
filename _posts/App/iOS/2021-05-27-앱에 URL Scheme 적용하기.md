@@ -133,3 +133,39 @@ func scene(_ scene: UIScene,
      */
 }
 ```
+
+### 적용해보기
+
+위에까지는 개념이었고, 내 프로젝트에 직접 적용해보았다. 우선 위에서도 언급한 것과 같이 아래처럼 내 앱의 url Scheme을 적용한다. 프로젝트 설정 > info 탭 > URL Types 에서 추가할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/120148826-c7671e80-c223-11eb-91b7-8dec82bfa3ed.png)
+
+위와 같이 설정하면 내 앱의 scheme은 `iosgiftshopchannel`가 된다. Scheme을 `iosgiftshopchannel`로 설정했다는 것은 아이폰에서 사파리의 주소창에 `iosgiftshopchannel://~~어쩌구`와 같이 주소를 입력하면 os에서 `iosgiftshopchannel`라는 scheme을 확인하고 이로 실행가능한 앱이 있는지 찾아준다.
+
+그래서 여기까지 설정하고 사파리에 `iosgiftshopchannel://hello`와 같이 치면(hello부분에는 어떤 주소를 넣어도 상관없다.) 아래와 같은 화면이 뜨며 내 앱으로 이동하는 것을 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/120149054-1f058a00-c224-11eb-837e-fac4d3d483df.png)
+
+그런데 단순히 외부에서 내 앱을 URL Scheme으로 호출만 하기 위해 사용하지는 않는다. 특정 url로 내 앱을 호출했을 때, scheme 뒤에 나오는 url을 parsing하여 또 앱에서 주소별로 다르게 동작하도록 설정할 수 있다.
+외부에서(사파리같은 곳) URL Scheme을 호출했을 때 이를 처리하는 부분은 위에서도 나왔지만 SceneDelegate를 사용한다는 가정 하에 `func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>)`라는 메서드에서 처리해준다. 위에서는 `scene(_:willConnectTo:options`에서도 처리해준다고 했지만 내가 테스트했을 때는 외부에서 URL Scheme을 호출하면 앞의 메서드가 호출되었다.
+
+`func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>)` 메서드를 아래와 같이 구현해주면 URL Scheme으로 호출할 때 주소가 parsing 되어서 나온다. 
+
+```swift
+func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    for context in URLContexts {
+        print("url: \(context.url.absoluteURL)")
+        print("scheme: \(context.url.scheme)")
+        print("host: \(context.url.host)")
+        print("path: \(context.url.path)")
+        print("components: \(context.url.pathComponents)")
+      }
+}
+```
+
+`iosgiftshopchannel://hello/my/name/is?name=3`의 url로 앱을 호출했을 때 출력 결과는 아래와 같이 나온다.
+
+![image](https://user-images.githubusercontent.com/41438361/120149777-2b3e1700-c225-11eb-9ea6-78f3b0fc9da5.png)
+
+지금은 url을 출력만 했지만, 여기서 url에 따라 원하는 작업을 하면 된다.
+
