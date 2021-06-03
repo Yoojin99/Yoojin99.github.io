@@ -29,7 +29,7 @@ class Programmer {
   }
   
   public void drink() {
-    _americano.drink()
+    _americano.drink();
   }
 }
 
@@ -58,9 +58,9 @@ class Programmer {
   
   public void drink(string coffeeType) { // 아마 어떤 종류의 커피를 마실지 선택하게 해야 할 수도 있다.
     if "Americano".equals(coffeeType) 
-      _americano.drink()
+      _americano.drink();
     else:
-      _lattee.drinkLatte() // 커피 종류마다 drink~ 메서드의 이름이 다르다면? 관리하기 어려울게 뻔하다.
+      _lattee.drinkLatte(); // 커피 종류마다 drink~ 메서드의 이름이 다르다면? 관리하기 어려울게 뻔하다.
   }
 }
 
