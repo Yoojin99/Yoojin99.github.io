@@ -8,7 +8,7 @@ comments: true
 header-img: img/dev/spring/spring.jpg
 ---  
   
-> `spring boot는 대체 어떻게 돌아가는가? 구조를 어떻게 해야 돌아가는가?`  
+> `spring boot는 대체 어떻게 돌아가는가? 어떤 구조로 돌아가는가?`  
 
 ---
 
@@ -16,7 +16,7 @@ spring boot 실습을 해봤지만 너무 빨리 지나간 터에 아직도 어�
 
 그래서 검색하다가 찾은 블로그에서 나온 아주 간단한 예시로 대강의 구조를 파악하고 어떻게 코드를 작성, 구성해야 하는지 훑어보겠다.
 
-일단 아래의 예제에서는 spring boot 내의 패키지 구조를 어떻게 설계해야 할지(Controller - service - dao)보고, jpa를 사용해서 데이터베이스 crud를 한다.
+일단 아래의 예제에서는 spring boot 내의 패키지 구조(Controller - service - dao)가 간략하게 나와있고, 여기에서 데이터 crud는 jpa를 사용해 처리한다.
 
 ## JPA?
 
@@ -39,21 +39,29 @@ ORM은 객체지향과 관계형 사이의 변환 기법을 의미하기 때문�
 
 다시 JPA로 돌아가서, JPA는 ORM을 java 언어에 맞게 사용하는 '스펙'이다. 그래서 ORM이 JPA의 상위 개념이 된다.
 
-우선 파일구조를 보면 다음과 같다.
+이제 spring boot에서 패키지가 어떻게 구성되어있는지 보겠다. 
 
-* Controller
+* Controller (사용자의 입력을 받아 처리/들어온 입력을 바탕으로 서비스단의 특정 서비스 요청, 뷰 보여주는 관리자의 역할)
   * HomeController.java
   * UserController.java
-* dao
+* repository
   * UserRepository.java
 * entity
   * UserEntity.java
-* service
+* service (dto/데이터 객체를 가지고 연산을 하거나 다른 처리 작업을 하는 애들)
   * UserService.java
+
+보통 여기에 dto(service단에서 주고받기 위한 데이터 객체)를 추가하기도 한다. 엔티티 객체를 영속 계층 바깥쪽에서 계속 사용하기 보다는 DTO를 이용하는 것이 권장된다. 우편물 정도의 개념이라고 생각하면 된다.
+* dto
+  * UserDto.java
   
+위의 구조를 보면 `User` -> `Controller`(요청 받음. 요청 받은 것을 토대로 서비스에게 특정 작업 요청/뷰 보여줌) -> (`Service` 단에서 데이터 연산 등 `repository`의 메서드를 활용해 데이터 crud를 한다. 이 과정에서 사용되는 객체가 dto/entity. 여기 과정은 생략될 수 있음) 
+
+참고로 Controller는 식당 알바생 정도라고 생각하면 된다. 서비스 단이 할 일(데이터 연산/처리)까지 Controller단에 다 넣어버리면 식당 알바생에게 나가서 주문도 받고 요리도 하고 청소도 하고 다 하라는 셈이 된다. 따라서 비즈니스 로직과 같은 서비스 단에서 할 작업들을 Controller에게 맡기지 말자.
+
 ## UserEntity
 
-데이터베이스 테이블의 스키마라고 할 수 있다.
+데이터베이스 테이블의 **스키마**라고 할 수 있다.
 
 ```java
 @Entity
@@ -70,12 +78,12 @@ public class UserEntity {
 }
 ```
 
-Spring Data JPA가 개발하는데 필요한 것은 단 두 종류의 코드로 가능하다.
+Spring Data JPA를 이용해서 개발하기 위해 필요한 종류의 코드는 두 가지이다.
 
 1. JPA를 통해 관리하게 되는 객체(Entity Object를 위한 **Entity Class**)
-2. 엔티티 객체들을 처리하는 기능을 가진 **Repository**
+2. 엔티티 객체들을 처리하는 기능을 가진 **Repository** (엔티티를 가지고 crud 하는 메서드 가진 애들)
 
-위에 나온 코드를 보면 여러 어노테이션이 나오는데, 좀 더 자세히 알아보도록 하겠다.
+레포지토리는 뒤에서 보기로 하고, 위에 나온 코드의 여러 어노테이션에 대해 좀 더 자세히 알아보도록 하겠다.
 
 ### `@Entity`
 
@@ -130,8 +138,11 @@ JpaRepository<T, ID>인터페이스를 상속받는다. T에는 미리 만든 �
 ```java
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, String> {
+  
 }
 ```
+
+위의 UserRepository 클래스 안에 crud 작업을 조건에 맞게 처리하는 쿼리문을 다양하게 구성해 넣을 수 있다. 지금 아무 메서드도 없는 이유는 밑의 Service에서 보겠지만, 메서드 이름만으로도 JPQL 쿼리문을 실행시킬 수 있기 때문이다. 만약 복잡한 쿼리문을 따로 생성해서 실행하고 싶다면 여기에 추가적인 메서드를 작성하면 된다.
 
 Spring Data JPA는 JPA의 구현체인 Hibernate를 이용하기 위한 여러 API를 제공한다. 그 중에서 가장 많이 사용되는 것이 JpaRepository라는 인터페이스이다.
 Spring Data JPA에는 여러 종류의 인터페이스의 기능을 통해 JPA 관련 작업을 별도의 코드 없이 처리할 수 있게 하는데, 그게 위에서 언급한 대로 직접
@@ -147,7 +158,8 @@ JpaRepository는 인터페이스고, 이를 상속하는 것만으로도 모든 
 
 ## UserService
 
-getUser는 아이디로 User 테이블을 조회해서 정보를 리턴하고, setUser는 User 테이블에 데이터를 저장하는 기능을 수행한다.
+getUser는 아이디로 User 테이블을 조회해서 정보를 리턴하고, setUser는 User 테이블에 데이터를 저장하는 기능을 수행한다. 서비스 단에서는 repository에 접근해서 데이터의 crud 작업을 
+상황에 맞게 실행하거나, 데이터를 처리하는 역할을 한다.
 
 ```java
 @Service
@@ -156,7 +168,7 @@ public class UserService {
   private UserRepository userRepository;
   
   public UserEntity getUser(String userId, String password) {
-    return userRepository.findById(userId).get;
+    return userRepository.findById(userId).get; 
   }
   
   public UserEntity setUser(UserEntity user) {
@@ -166,7 +178,7 @@ public class UserService {
 ```
 
 웹 어플리케이션을 제작할 때는 HttpServletRequest나 HttpServletResponse를 서비스 계층으로 전달하지 않는 것을 원칙으로 한다.
-유사하게 엔티티 객체가 JPA에서 사용하는 객체이므로 JPA 외에서 사용하지 않는 것이 권장된다.
+유사하게 엔티티 객체가 JPA에서 사용하는 객체이므로 JPA 외에서 사용하지 않는 것이 권장된다.(엔티티 객체를 서비스단에서 사용하지 말고 DTO를 사용하라는 소리다.)
 
 ## UserController
 
@@ -184,7 +196,7 @@ public class UserController {
   public UserEntity signin(@RequestBody UserEntity reqBody) {
     String userId = reqBody.getUserId();
     String password = reqBody.getPassword();
-    UserEntity user = userService.getUser(userId, password);
+    UserEntity user = userService.getUser(userId, password); // 서비스 단에 작업 처리를 요청해서 데이터를 받았다.
     return user;
   }
   
@@ -199,6 +211,6 @@ public class UserController {
 
 
 출처
-lombok : https://medium.com/@dlaudtjr07/spring-boot-lombok-%EA%B0%9C%EB%85%90-%EB%B0%8F-%EC%84%A4%EC%B9%98-71f9dbbc2f42
-코드로 배우는 스프링 부트 웹 프로젝트 책 by 구멍가게 코딩단
-https://gofnrk.tistory.com/16
+* lombok : https://medium.com/@dlaudtjr07/spring-boot-lombok-%EA%B0%9C%EB%85%90-%EB%B0%8F-%EC%84%A4%EC%B9%98-71f9dbbc2f42
+* 코드로 배우는 스프링 부트 웹 프로젝트 책 by 구멍가게 코딩단
+* https://gofnrk.tistory.com/16
