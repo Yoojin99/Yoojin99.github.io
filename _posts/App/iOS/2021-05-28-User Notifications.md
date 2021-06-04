@@ -13,6 +13,8 @@ header-img: img/dev/app/ios/XcodeImg.png
 
 ---
 
+이 글은 Notification을 앱에서 띄우기 위한 개념에 대해서만 정리했다. 실제로 띄우는 것을 구현하려면 [이 글](https://yoojin99.github.io/app/Push-%EC%95%8C%EB%A6%BC-%EB%9D%84%EC%9A%B0%EA%B8%B0/)을 보자.
+
 애플에는 user notification을 띄울 수 있는 [프레임워크](https://developer.apple.com/documentation/usernotifications)가 있다.
 Notification와 push를 따로 말하는 이유는 통상적으로 화면 상단에 뜨는 앱 알림을 'push'라고 일반적으로 말하긴 했지만 앱 내부에서 알림을 띄우는 것과,
 앱 외부(서버)에서 알림을 보내는 것을 구분하기 위해서다. Push는 앱 외부에서 알림을 보내는 경우에 push라고 한다.
