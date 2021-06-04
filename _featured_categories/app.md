@@ -4,7 +4,7 @@ title: APP
 slug: app
 menu: true
 submenu: true
-order: 9
+order: 1
 description: >
   앱 개발 안드로이드 & iOS 👽
 ---
