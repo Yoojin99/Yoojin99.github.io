@@ -76,9 +76,9 @@ Delegate에 의해 제공되는 기능들이 필요하지 않다면, 세션을 �
 
 대부분의 네트워킹 API와 같이, URLSession API는 비동기적인 성질이 강하다. 내가 호출하는 메서드에 따라, 아래의 세 가지 방법 중 한 방법으로 데이터를 앱에 반환한다.
 
-* 만약 Swift를 사용하고 있다면, 공통의 작업을 수행하기 위해 `async` 키워드가 붙여진 메서드를 사용할 수 있다. 예를 들어, `data(from:delegate:)`는 데이터를 가져오고, `download(from:delegate:)`는 파일을 다운로드 한다. 부르는 시점에서 전송작업이 완료될때까지 실행을 멈추기 위해 `await` 키워드를 사용한다.
+* 만약 Swift를 사용하고 있다면, 공통의 작업을 수행하기 위해 `async` 키워드가 붙여진 메서드를 사용할 수 있다. 예를 들어, `data(from:delegate:)`는 데이터를 가져오고, `download(from:delegate:)`는 파일을 다운로드 한다. 부르는 시점에서 전송작업이 완료될때까지 실행을 멈추기 위해 `await` 키워드를 사용한다. 데이터를 `AsyncSequence`로 받기 위해 `bytes(from:delegate:)` 메서드를 사용할 수도 있다. 이 방법으로, `for-await-in` 문법을 사용해서 앱이 받는 데이터를 반복할 수 있다.
+* Swift/Objective-C에서, 전송이 완료되면 실행되는 completion handler block을 사용할 수 있다.
 
-sssss
 
 출처
 
