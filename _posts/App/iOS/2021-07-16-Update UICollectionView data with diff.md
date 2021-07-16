@@ -223,13 +223,12 @@ moveSection(_ section: Int, toSection newSection: Int)
 
 ![image](https://user-images.githubusercontent.com/41438361/125892147-192d9077-13c6-4bc1-98dd-1cdf955ecf65.png)
 
-## Edit distance
+## Edit distance(편집 거리)
 
 이런 연산들을 직접 수행하는 것은 지루하며 에러를 발생시킬 위험이 있다. 우리는 알고리즘을 이용해서 이런 연산을 추상화시킬 수 있다. 그 중 하나는
 두 문자열 사이의 거리(한 문자열에서 한 글자씩 수정해서 다른 문자열로 만들 수 있기까지의 단계 수)를 알기 위해 동적 프로그래밍을 사용하는 [Wagner-Fischer 알고리즘](https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm)이다.
 
-Edit distance는 한 문자열이 다른 문자열로 바뀌기 위해 바뀌어야 하는 단계 수를 의미한다. 문자열은 글자들의 collection이니, 이를 아이템의 collection으로
-동작하게 일반화시킬 수 있다. 글자를 비교하는 대신, 아이템이 `Hashable`을 따르게 할 수 있다.
+Edit distance는 한 문자열이 다른 문자열로 바뀌기 위해 바뀌어야 하는 단계 수를 의미한다. 문자열은 글자들의 collection이니, 이를 아이템의 collection으로 동작하게 일반화시킬 수 있다. 글자를 비교하는 대신, 아이템이 `Hashable`을 따르게 할 수 있다.
 
 ### "kit" to "kat"
 
@@ -264,19 +263,19 @@ Edit distance는 한 문자열이 다른 문자열로 바뀌기 위해 바뀌어
 수평 방향으로 가는 것은 삽입을, 수직으로 이동하는 것은 삭제를 의미하며 대각선으로 이동하는 것은 대체하는 것을 의미한다.
 
 이 방법으로 우리는 행, 열마다 반복하는 행렬을 만들 수 있다. 먼저, source collection의 글자 "k"는 destination collection의 단어 "k"와 같으므로
-우리는 왼쪽 위에 있는 값을 가져올 수 있고, 이는 0 substitution를 의미한다.
+우리는 왼쪽 위에 있는 값을 가져올 수 있고, 이는 0 substitution를 의미한다. 
 
 ![image](https://user-images.githubusercontent.com/41438361/125893662-3ac170ea-fda3-4d09-a414-f570fb51f7a5.png)
 
 
 **같지 않을 때**
 
-그리고 desintation collection의 다음 글자로 넘어간다. 여기에서 "k"와 "a"는 같지 않다. 우리는 왼쪽, 위쪽, 그리고 대각선 방향의 왼-위쪽 에서의 최소값을 가져온다.
-그리고 1을 증가시킨다.
+그리고 desintation collection의 다음 글자로 넘어간다. 여기에서 "k"와 "a"는 같지 않다. 우리는 왼쪽, 위쪽, 그리고 대각선 방향의 왼-위쪽 에서의 최소값을 가져온다. 그리고 1을 증가시킨다.
 
 ![image](https://user-images.githubusercontent.com/41438361/125893859-d3f33c37-9e59-46b4-b0a4-baf69119d563.png)
 
-여기서 우리는 왼쪽, 즉 수평 방향에서 값을 가져온다. 그래서 우리는 1 insertion으로 값을 증가시킨다.
+현재 위쪽은 2i, 왼쪽 위는 1i, 왼쪽은 0의 값을 가지고 있다. 그래서 최솟값은 왼쪽의 0이 되는 것이다. 우리는 이 값을 가져올 것이다. 
+여기서 우리는 **왼쪽, 즉 수평 방향**에서 값을 가져왔다. 그래서 우리는 1 insertion 으로 값을 증가시킨다. 수평방향의 값을 가져왔으니 insertion이고, 값에서 1을 증가시키므로 1i가 되는 것이다.
 
 **"k"에서 "kat" 👉 2 insertions**
 
@@ -293,6 +292,42 @@ Edit distance는 한 문자열이 다른 문자열로 바뀌기 위해 바뀌어
 ![image](https://user-images.githubusercontent.com/41438361/125894473-9453c1d9-7197-46b1-a7cf-2440b635d4bc.png)
 
 이제 우리가 인덱스 1을 업데이트 해야 한다는 것을 알 수 있다.
+
+**다른 예제**
+
+아직도 헷갈리니 다른 예제를 가지고 와봤다.
+
+AUERY에서 GARUEY 로 바꾸는 것을 해보자. 아래처럼 초기 행렬을 만들었다. 편의상 i, d는 표시하지 않았다. 
+
+![image](https://user-images.githubusercontent.com/41438361/125907232-5b90c51c-4f6b-4da8-b198-dda1350d943a.png)
+
+위에서도 봤지만, 처음 1d, 2d, 3d,.. 1s, 2s, 3s,,, 는 빈문자열 "" 기준으로 source에서 "", ""에서 dest 문자열이 되기 위해 어떤 연산이 일어나는지를 생각해보면 왜 축이 저 값을 기본으로 설정된 상태에서 시작하는 지 알 수 있다. 
+
+1. 초기 0에서 시작하자. 0은 빈 문자열인 ""을 의미한다.
+2. A와 G는 같지 않다. 따라서 왼, 위, 왼위 중 최솟값을 선택한 후 1을 증가시켜야 한다. 최솟값은 왼-위의 0이고, 대각선 방향이므로 1s가 된다.
+3. 다음으로, source의 A와 dest의 A를 비교한다. 둘은 같으므로 대각선 왼쪽 위의 값을 그대로 가져온다. 따라서 1s가 될 것이다.
+4. 위에서 배웠던 알고리즘을 통해 첫번째 행을 완성한다.
+5. 쭉쭉 다음 행까지 완성한다.
+
+![image](https://user-images.githubusercontent.com/41438361/125908776-51d7a11a-e6ab-4328-9eb0-55f9d3ec9656.png)
+
+이렇게 모든 칸을 채웠다. 결론적으로 3번 연산을 해서 AUERY -> GARUEY로 만들 수 있는 것을 알 수 있다. 더 자세히 보기 위해, 아래와 같이
+발생하는 연산들을 표시했다. 
+
+![image](https://user-images.githubusercontent.com/41438361/125914388-78cf57ec-745d-4660-a86d-f34e278358da.png)
+
+빨간색은 delete, 파란색은 insert, 초록색은 substitute 로 생각하면 된다. 그리고 최종적으로 따라가는 루트를 보라색으로 체크했는데, 글씨가 개판이라 다시 적으면 아래와 같다.
+
+1. 0 -> 1i
+2. 1i -> 1i
+3. 1i -> 2i
+4. 2i -> 2i
+5. 2i -> 2i
+6. 2i -> 2i 1d
+7. 2i 1d -> 2i 1d
+
+그리고 실제로 2번의 insert, 1번의 delete로 문장이 바뀔 수 있는 지를 확인해 보니 G insert, R insert, R delete 로 문자열이 바뀌는 것을
+확인할 수 있었다.
 
 ## DeepDiff
 
@@ -363,10 +398,62 @@ class Row<T> {
 }
 ```
 
+이로 인해 `previousRow`, `currentRow`는 아래와 같은 구조를 가지게 된다. `Change`를 담는 배열들의 배열이 `slots`이 되는 것이다. 이 `Change`에는 위에서 봤던 1i, 1d 이런 것들이 될 것이다. 
+
+![image](https://user-images.githubusercontent.com/41438361/125916301-efc869ea-ee68-4f45-9294-e9d021c6f65f.png)
 
 
+행, 열마다 반복했던 알고리즘을 생각해서 2 loop을 사용한다.
 
+```swift
 
+old.enumerated().forEach { indexInOld, oldItem in
+  new.enumerated().forEach { index, item in
+    
+  }
+}
+```
 
-ddddddsss
-dddddsss
+그리고 old, new 배열에 있는 아이템을 비교하고, `Row`객체에 있는 slot을 업데이트 하면 된다.
+
+**`Hashable` vs `Equatable`**
+
+우리는 객체가 복잡하면 Equatable 메서드가 시간을 잡아먹기 때문에 동일성을 체크할 때 신중히 해야 한다. `Hashable`이 `Equatable`을 따르고, 두개의 같은 객체가 같은 해시 값을 갖고 있는 것을 알 것이다. 그래서 만약 같은 해시 값을 갖지 않으면, equatable 하지 않다라고 할 수 있는 것이다. 역은 성립하지 않지만, 이는 `Equatable` 함수를 호출하는 횟수를 줄이기에 충분하다.
+
+```swift
+private func isEqual<T: Hashable>(oldItem: T, newItem: T) -> Bool {
+  // Same items must have same hashValue
+  if oldItem.hashValue != newItem.hashValue {
+    return false
+  } else {
+    // Different hashValue does not always mean different items
+    return oldItem == newItem
+  }
+}
+```
+
+**Move는?**
+
+하지만 여기서 insertion, deletion, replacement에 대한 단계만 업데이트 했지, 이동은 없는 것을 알았을 것이다. 이동은 같은 아이템을
+삭제하고 삽입하는 것과 같다. `MoveReducer`를 보면 매우 효율적으로 구현된 것은 아니지만, 힌트를 준다.
+
+**`UICollectionView`의 `IndexPath`언급하기**
+
+`DeepDiff`에 의해 반환된 changes 배열을 가지고, `UICollectionView`가 업데이트를 수행하기 위한 적절한 `IndexPath`의 집합을 알려줄 수 있다.
+
+`Change`에서 `IndexPath`로 바꾸는 것은 자명하다. `UICollectionView` [익스텐션](https://github.com/onmyway133/DeepDiff/blob/master/Sources/iOS/UICollectionView%2BExtensions.swift)을 봐도 된다. 
+
+한 가지를 유의하지 않으면 앞서 봤던 것과 비슷한 `NSInternalInconsistencyException`을 받을 것이다. 바로 `reloadItems`를 `performBatchUpdates` 밖에서 호출해야 한다는 것이다. 이는 이 알고리즘으로 인해 리턴된 `Replace` 단계는 collection이 업데이트 된 이후 상태의 `IndexPath`를 포함하지만, `UICollectionView`는 이 상태 이전의 것을 기대하기 때문이다.
+
+그 외에는 꽤 명료하다. Changes가 얼마나 빠르고 유익한지 알면 놀랄 것이다.
+
+## Where to go from here
+
+이 가이드가 끝나면, 직접 `IndexPath`를 연산해서 `UiCollectionView`를 업데이트 하는 방법을 알았을 것이다. 이런 예외로 고생하면서, 라이브러리의 도움을 받는 것이 얼마나 도움이 되는지를 알았을 것이다. 알고리즘을 알았으니 순수 Swift 언어로 구현할 수 있을 것이다. `Hashable`과 `Equatable`이 어떻게 사용되는지도 봤다.
+
+현재 `DeepDiff`는 선형 시간 안에 수행되고 더 빠른 `Heckel` 알고리즘을 사용한다. [여기](https://github.com/onmyway133/DeepDiff/tree/master/Example/Benchmark)에서 벤치마크를 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/125905172-5642a105-1fe7-401e-a7d7-baa2ba4de813.png)
+
+[IGListKit](https://github.com/instagram/IGListKit) 또한 `Heckel` 알고리즘을 채용하지만, Objective C++로 구현되어 있으며 최적화가 많이 되었다. 다음 글에서는 `Heckel` 알고리즘에 대해, 또 순수 Swift로 구현하는지를 볼 것이다. 
+
