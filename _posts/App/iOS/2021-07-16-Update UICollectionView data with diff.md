@@ -296,8 +296,8 @@ Edit distance는 한 문자열이 다른 문자열로 바뀌기 위해 바뀌어
 
 ## DeepDiff
 
-이 알고리즘은 2개의 문자 사이의 변화를 보여주는데, 문자열은 글자의 collection으로 생각할 수 있다고 했다. 이 개념을 아이템의 collection을 만드는 데 적용하기 위ㅐ
-일반화할 수 있다.
+이 알고리즘은 2개의 문자 사이의 변화를 보여주는데, 문자열은 글자의 collection으로 생각할 수 있다고 했다. 이 개념을 아이템의 collection을 만드는 데 적용하기 위해 일반화할 수 있다.
+
 
 DeepDiff를 구현한 것은 [깃헙](https://github.com/onmyway133/DeepDiff)에서 확인할 수 있다. `old`와 `new` 배열이 주어지면, 변하기 위해
 필요한 연산을 계산한다. 이런 변화는 변화의 타입(`insert`, `delete`, `replace`, `move`), 그리고 변하는 `index`로 구성되어 있다.
@@ -314,7 +314,56 @@ let changes = diff(old: old, new: new)
 
 우리는 `m`과 `n`이 각각 source와 destination collection의 길이를 의미하는 행렬 안에서 반복할 것이다. 그래서 이 알고리즘의 복잡도는 O(mn)이 된다.
 
-또한 성능은 collection의 크기와 아이템이 얼마나 복잡한지에 크게 영향을 받는다.
+또한 성능은 collection의 크기와 아이템이 얼마나 복잡한지에 크게 영향을 받는다. `Equatable`을 얼마나 깊게, 복잡하게 수행할지에 따라서도 성능이 영향을 받게 된다.
+
+Wagner 알고리즘 위키 페이지를 보면, 성능을 향상시키기 위해 알 수 있는 것들에 대한 힌트가 있다.
+
+> 알고리즘이 특정 시간에 이전 행과 현재의 행에 대한 정보만을 요구하므로 우리는 O(mn)대신에 O(m)을 채택해서 알고리즘이 더 적은 공간을 사용하게 할 수 있다.
+
+한 번에 한 행만을 연산하기 때문에 전체 행렬을 저장하는 것은 비효율적이기 때문에, 대신에 우리는 2개의 배열을 가지고 연산하면 된다. 이는 메모리에 접근하는 횟수 또한 줄여줄 것이다.
+
+**Change**
+
+`Change`의 각 case는 상호 배타적이기 때문에, 열거형으로 나타내기 좋은 예시다.
+
+```swift
+public enum Change<T> {
+  case insert(Insert<T>)
+  case delete(Delete<T>)
+  case replace(Replace<T>)
+  case move(Move<T>)
+}
+```
+
+* `insert` : 아이템이 해당 인덱스에 삽입됨
+* `delete` : 아이템이 해당 인덱스에서 삭제됨
+* `replace` : 해당 인덱스의 아이템이 다른 아이템에 의해 대체됨
+* `move` : 해당 인덱스의 아이템이 다른 인덱스로 옮겨짐
+
+**2개의 행만 사용하기**
+
+말했듯이, 2개의 행만 가지고 연산을 하면 된다. 행의 각 칸은 변화의 collection이다. 여기서 diff는 문자열을 포함한 `Hashable` 아이템을 가지는
+모든 collection을 수용하는 제네릭 함수다.
+
+```swift
+public func diff<T: Hashable>(old: Array<T>, new: Array<T>) -> [Change<T>] {
+  let previousRow = Row<T>()
+  previousRow.seed(with: new)
+  let currentRow = Row<T>()
+  …
+}
+```
+
+관심사를 분리하는 것이 좋기 때문에, 각 행은 각각의 상태를 관리하고 있어야 한다. Slot의 배열을 가지는 `Row` 객체를 정의하는 것에서 시작한다.
+
+```swift
+class Row<T> {
+  /// Each slot is a collection of Change
+  var slots: [[Change<T>]] = []
+}
+```
+
+
 
 
 
