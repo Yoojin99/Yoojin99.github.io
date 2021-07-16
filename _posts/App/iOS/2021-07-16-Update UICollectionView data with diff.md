@@ -539,3 +539,5 @@ func reload<T: DiffAware>(
 
 [IGListKit](https://github.com/instagram/IGListKit) 또한 `Heckel` 알고리즘을 채용하지만, Objective C++로 구현되어 있으며 최적화가 많이 되었다. 다음 글에서는 `Heckel` 알고리즘에 대해, 또 순수 Swift로 구현하는지를 볼 것이다. 
 
+* 출처
+  * https://medium.com/flawless-app-stories/a-better-way-to-update-uicollectionview-data-in-swift-with-diff-framework-924db158db86
