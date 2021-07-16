@@ -333,6 +333,7 @@ AUERY에서 GARUEY 로 바꾸는 것을 해보자. 아래처럼 초기 행렬을
 
 이 알고리즘은 2개의 문자 사이의 변화를 보여주는데, 문자열은 글자의 collection으로 생각할 수 있다고 했다. 이 개념을 아이템의 collection을 만드는 데 적용하기 위해 일반화할 수 있다.
 
+![1_w5n7s2u_eXRN_F9DdwIdIA](https://user-images.githubusercontent.com/41438361/125924878-cca85dbb-0c5d-447d-ba5c-afd25f620fbb.gif)
 
 DeepDiff를 구현한 것은 [깃헙](https://github.com/onmyway133/DeepDiff)에서 확인할 수 있다. `old`와 `new` 배열이 주어지면, 변하기 위해
 필요한 연산을 계산한다. 이런 변화는 변화의 타입(`insert`, `delete`, `replace`, `move`), 그리고 변하는 `index`로 구성되어 있다.
@@ -446,6 +447,87 @@ private func isEqual<T: Hashable>(oldItem: T, newItem: T) -> Bool {
 한 가지를 유의하지 않으면 앞서 봤던 것과 비슷한 `NSInternalInconsistencyException`을 받을 것이다. 바로 `reloadItems`를 `performBatchUpdates` 밖에서 호출해야 한다는 것이다. 이는 이 알고리즘으로 인해 리턴된 `Replace` 단계는 collection이 업데이트 된 이후 상태의 `IndexPath`를 포함하지만, `UICollectionView`는 이 상태 이전의 것을 기대하기 때문이다.
 
 그 외에는 꽤 명료하다. Changes가 얼마나 빠르고 유익한지 알면 놀랄 것이다.
+
+## 사용법
+
+```swift
+let oldItems = self.items // 변화하기 이전의 데이터 ("kit")
+let items = DataSet.generateItems() // 이렇게 변해야 함 ("kat")
+let changes = diff(old: oldItems, new: items) 
+
+let exception = tryBlock {
+  // collectionView의 extension을 이용한다.
+  self.collectionView.reload(changes: changes, updateData: {
+    self.items = items
+  })
+}
+```
+
+사용하려면 위의 코드대로 사용하면 된다. 더 자세한 내용을 보자면, `changes`는 `Changes` 구조체 타입으로, 아래와 같이 구성되어 있다.
+
+Insert, Delete, Replace, Move의 각 연산마다 item(old + new), index가 정의되어 있다.
+
+```swift
+public struct Insert<T> {
+  public let item: T
+  public let index: Int
+}
+
+public struct Delete<T> {
+  public let item: T
+  public let index: Int
+}
+
+public struct Replace<T> {
+  public let oldItem: T
+  public let newItem: T
+  public let index: Int
+}
+
+public struct Move<T> {
+  public let item: T
+  public let fromIndex: Int
+  public let toIndex: Int
+}
+
+/// The computed changes from diff
+///
+/// - insert: Insert an item at index
+/// - delete: Delete an item from index
+/// - replace: Replace an item at index with another item
+/// - move: Move the same item from this index to another index
+public enum Change<T> {
+  case insert(Insert<T>)
+  case delete(Delete<T>)
+  case replace(Replace<T>)
+  case move(Move<T>)
+}
+```
+
+**UICollectionView+Extensions.swift**
+
+```swift
+func reload<T: DiffAware>(
+  changes: [Change<T>],
+  section: Int = 0,
+  updateData: () -> Void,
+  completion: ((Bool) -> Void)? = nil) {
+  
+  let changesWithIndexPath = IndexPathConverter().convert(changes: changes, section: section)
+
+  performBatchUpdates({
+    updateData()
+    insideUpdate(changesWithIndexPath: changesWithIndexPath)
+  }, completion: { finished in
+    completion?(finished)
+  })
+
+  // reloadRows needs to be called outside the batch
+  outsideUpdate(changesWithIndexPath: changesWithIndexPath)
+}
+```
+
+`reload`를 좀 더 자세히 보면, change의 연산들마다 이미 설정되어 있는 `index`로 `indexPath`를 생서하고, 이를 이용해 `performBatchUpdates`에서 연산을 수행한다.
 
 ## Where to go from here
 
