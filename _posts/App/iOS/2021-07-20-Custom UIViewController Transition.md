@@ -108,17 +108,17 @@ Context 객체는 전환에 포함된 뷰와 뷰 컨트롤러에 대한 정보�
 6. UIKit이 전환에 사용되는 애니메이션을 보여주기 위해 animation controller의 `animateTransition(using:)`을 호출한다.
 7. 마지막으로, animation controller가 애니메이션이 끝났을을 나타내기 위해 transitioning context의 `completeTransition(_:)`을 호출한다.
 
-## 구현
+# 구현
 
 구현이 과정이 복잡해 보일 수 있지만, 위에서 봤던 transitioning api 다이어그램의 구조를 그대로 가져간다.
 
 Custom transition 예제가 굉장히 다양하기 때문에, 그 중 설명이 잘 되어 있는 예제 두 가지를 보면서 작동하는 원리와 custom transition을 구현하는 방법을 살펴볼 것이다.
 
-### 1. [raywenderlich 예제](https://www.raywenderlich.com/322-custom-uiviewcontroller-transitions-getting-started)
+## 1. [raywenderlich 예제](https://www.raywenderlich.com/322-custom-uiviewcontroller-transitions-getting-started)
 
 시작하기 위한 초기 프로젝트도 사이트에서 제공하고 있다. 여기에서 바로 시작해보자.
 
-#### Animator 생성하기
+### Animator 생성하기
 
 애니메이션을 수행하는 animatation controller를 생성할 것이다. Animation Controllers 폴더에 FlipPresentAnimationController.swift를 생성했다. 
 
@@ -153,7 +153,251 @@ snapshot.layer.masksToBounds = true
 
 여기서 snapshot이 뭘까? 스냅샷은 말 그래도 스크린 샷이다. [공식문서](https://developer.apple.com/documentation/uikit/uiview/1622531-snapshotview)에 따르면, `snapshotView(afterScreenUpdates:)` 메서드는 현재 뷰에 있는 컨텐츠를 기반으로 snapshot을 리턴한다. `afterScreenUpdates` 파라미터는 스냅샷이 변화가 일어난 이후에 찍어져야 하는지 아닌지를 나타내는 bool 값이다. 만약 false를 전달하면 변화를 적용하지 않은 현재 상태에서의 화면의 snapshot을 찍는다.
 
-2. UIKit
+2. UIKit이 뷰 계층과 애니메이션을 모두 관리하는 것을 간단하게 하기 위해 전체 전환을 컨테이너 뷰로 캡슐화한다. 우리는 이 컨테이너 뷰의 참조를 얻고 새로운 뷰의 최종 프레임이 어떻게 될 지를 결정하면 된다.
+3. 스냅샷의 frame과 drawing을 구성해서 "from" 뷰에 있는 카드와 완전히 일치하고, 커버할 수 있도록 한다. 아까 우리가 스냅샷을 to 뷰가 전환이 일어난 이후의 뷰로 찍었었는데, 이를 Card에 맞춘 것이다.
+
+그리고 아래의 코드를 `animateTransition(using:)`에 덧붙인다.
+
+```swift
+// 1
+containerView.addSubview(toVC.view)
+containerView.addSubview(snapshot)
+toVC.view.isHidden = true
+
+// 2
+AnimationHelper.perspectiveTransform(for: containerView)
+snapshot.layer.transform = AnimationHelper.yRotation(.pi / 2)
+// 3
+let duration = transitionDuration(using: transitionContext)
+```
+
+위에서 생성했던 `containerView`는 UIKit이 생성한 것으로, 오직 "from" 뷰만 포함하고 있다. 꼭 전환에 관련있는 다른 뷰들을 추가해야 한다.
+이때 `addSubview(_:)`를 사용하면 새로운 뷰를 뷰 계층에 있는 모든 뷰들보다 가장 앞쪽에 추가한다는 것을 기억해야 한다.
+
+1. "to" view를 뷰 계층에 추가하고 지금은 당장 화면에 나타낼 게 아니니 감춘다. 스냅샷을 가장 앞쪽에 둔다. 스냅샷은 그럼 보이지 않냐고 생각할 수 있는데, 이는 바로 밑에서 초기에 안보이게 설정한다.
+2. 스냅샷을 y축을 기준으로 90도 회전에서 애니메이션을 시작하기 전에 스냅샷이 보이지 않게 설정한다.
+3. 애니메이션이 실행될 시간을 불러온다.
+
+*`AnimationHelper`는 따로 정의한 것으로, 뷰를 회전하는데 도움을 준다. 코드는 아래와 같다.*
+
+```swift
+struct AnimationHelper {
+  static func yRotation(_ angle: Double) -> CATransform3D {
+    return CATransform3DMakeRotation(CGFloat(angle), 0.0, 1.0, 0.0)
+  }
+  
+  static func perspectiveTransform(for containerView: UIView) {
+    var transform = CATransform3DIdentity
+    transform.m34 = -0.002
+    containerView.layer.sublayerTransform = transform
+  }
+}
+```
+
+이제 세팅은 완료되었고, 애니메이션을 보여줄 차례다. 아래의 코드를 이어서 추가한다.
+
+```swift
+// 1
+UIView.animateKeyframes(
+  withDuration: duration,
+  delay: 0,
+  options: .calculationModeCubic,
+  animations: {
+    // 2
+    UIView.addKeyframe(withRelativeStartTime: 0.0, relativeDuration: 1/3) {
+      fromVC.view.layer.transform = AnimationHelper.yRotation(-.pi / 2)
+    }
+    
+    // 3
+    UIView.addKeyframe(withRelativeStartTime: 1/3, relativeDuration: 1/3) {
+      snapshot.layer.transform = AnimationHelper.yRotation(0.0)
+    }
+    
+    // 4
+    UIView.addKeyframe(withRelativeStartTime: 2/3, relativeDuration: 1/3) {
+      snapshot.frame = finalFrame
+      snapshot.layer.cornerRadius = 0
+    }
+},
+  // 5
+  completion: { _ in
+    toVC.view.isHidden = false
+    snapshot.removeFromSuperview()
+    fromVC.view.layer.transform = CATransform3DIdentity
+    transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
+})
+```
+
+1. 표준 UIView keyframe 애니메이션을 사용한다. 애니메이션이 실행되는 시간은 전환이 일언는 시간과 정확히 일치해야 한다.
+2. "from" 뷰를 y축으로 90도 회전해서 화면에서 안보이게 한다.
+3. 90도로 회전되어 있던 스냅샷을 다시 원래대로 돌려놔서 화면에서 보이게 한다.
+4. 스냅샷의 프레임을 화면 전체 크기가 되게 한다.
+5. 스냅샷은 이제 "to" 뷰와 완전히 일치하기 때문에(크기나 위치나) 실제의 "to" view를 노출해도 괜찮다. 스냅샷은 이제 더 이상 필요가 없기 때문에 뷰 계층에서 제거한다. 그리고 "from" 뷰를 원래의 상태로 되돌려놓는다. 그렇지 않으면 다시 원래의 "from" 뷰로 되돌아갈 때 감춰져 있을 것이다. `completeTransition(_:)`을 호출해서 UIKit에게 애니메이션이 끝났다는 것을 알릴 수 있다. 이를 통해 최종 상태가 이제 변하지 않을 것이고 "from" 뷰를 컨테이너에서 없애게 된다.
+
+여기까지의 작업을 통해 animation controller를 이제 사용할 수 있게 된 것이다.
+
+### Animator와 ViewController 연결하기
+
+UIKit은 transitioning delegate가 전환에 필요한 animation controller를 내놓기를 기대하고 있다. 이를 위해 먼저 이 delegate에 `UIViewControllerTransitioningDelegate`를 따르는 객체를 할당해야 한다. 이 예제에서는 `CardViewController`가 transitioning delegate의 역할을 할 것이다. `CardViewController`가 이 프로토콜을 따르게 아래와 같이 코드를 작성한다.
+
+```swift
+extension CardViewController: UIViewControllerTransitioningDelegate {
+  func animationController(forPresented presented: UIViewController,
+                           presenting: UIViewController,
+                           source: UIViewController)
+    -> UIViewControllerAnimatedTransitioning? {
+    return FlipPresentAnimationController(originFrame: cardView.frame)
+  }
+}
+```
+
+이 메서드에서 card의 프레임으로 우리가 아까 만든 animation controller를 초기화해서 반환한다.
+이제 `CardViewController`를 transitioning delegate로 설정해주면 된다. `prepare(for:sender:)` 메서드에서 아래와 같이 코드를 작성한다.
+
+```swift
+destinationViewController.transitioningDelegate = self
+```
+
+여기서 중요한 것은 **화면에 표시될(to) 뷰 컨트롤러의 transitioning delegate를 사용하는 것이지, 화면에 다른 뷰 컨트롤러를 표시하는(from)뷰 컨트롤러의 transitioning delegate를 사용하는 것이 아니라는 것이다.**
+
+프로젝트를 실행하면 이제 아래와 같이 잘 나온다.
+
+![r1](https://user-images.githubusercontent.com/41438361/126452422-6cc55847-cd74-4e89-9299-2f139eecded7.gif)
+
+### View Controller 해제하기
+
+이제 새로운 뷰 컨트롤러를 띄우는 것을 해봤으니 해제하는 것도 해볼 것이다. `FlipDissmissAnimationController`를 생성한다.
+그리고 아래와 같이 코드를 작성한다.
+
+```swift
+class FlipDismissAnimationController: NSObject, UIViewControllerAnimatedTransitioning {
+  
+  private let destinationFrame: CGRect
+  
+  init(destinationFrame: CGRect) {
+    self.destinationFrame = destinationFrame
+  }
+  
+  func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
+    return 0.6
+  }
+  
+  func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
+    
+  }
+}
+```
+
+이 animation controller는 presenting할 때의 애니메이션을 정반대로 수행해야 한다. 이를 위해 아래의 작업들을 해야 한다.
+
+* 현재 띄워진 뷰를 카드의 사이즈로 줄여야 한다. `destinationFrame` 이 이 값을 가진다.
+* 원래의 카드를 보여주기 위해 view를 뒤집어야 한다.
+
+`animateTransition(using:)`에 아래의 코드를 추가한다.
+
+```swift
+// 1
+guard let fromVC = transitionContext.viewController(forKey: .from),
+  let toVC = transitionContext.viewController(forKey: .to),
+  let snapshot = fromVC.view.snapshotView(afterScreenUpdates: false)
+  else {
+    return
+}
+
+snapshot.layer.cornerRadius = CardViewController.cardCornerRadius
+snapshot.layer.masksToBounds = true
+
+// 2
+let containerView = transitionContext.containerView
+containerView.insertSubview(toVC.view, at: 0)
+containerView.addSubview(snapshot)
+fromVC.view.isHidden = true
+
+// 3
+AnimationHelper.perspectiveTransform(for: containerView)
+toVC.view.layer.transform = AnimationHelper.yRotation(-.pi / 2)
+let duration = transitionDuration(using: transitionContext)
+```
+
+앞서 했던 작업과 비슷하지만, 몇가지 차이가 있다.
+
+1. 이번에는 "from" view의 스냅샷을 찍는다.
+2. 레이어링 하는 것은 중요하다. 뒤에서 앞쪽으로 뷰들이 정렬되어 있는 순서는 "to", "from", 스냅샷 순이다. 
+3. "to" 뷰를 회전에서 스냅샷을 회전할 때 즉시 나타나지 않게 한다.
+
+아래의 코드를 추가한다.
+
+```swift
+UIView.animateKeyframes(
+  withDuration: duration,
+  delay: 0,
+  options: .calculationModeCubic,
+  animations: {
+    // 1
+    UIView.addKeyframe(withRelativeStartTime: 0.0, relativeDuration: 1/3) {
+      snapshot.frame = self.destinationFrame
+    }
+    
+    UIView.addKeyframe(withRelativeStartTime: 1/3, relativeDuration: 1/3) {
+      snapshot.layer.transform = AnimationHelper.yRotation(.pi / 2)
+    }
+    
+    UIView.addKeyframe(withRelativeStartTime: 2/3, relativeDuration: 1/3) {
+      toVC.view.layer.transform = AnimationHelper.yRotation(0.0)
+    }
+},
+  // 2
+  completion: { _ in
+    fromVC.view.isHidden = false
+    snapshot.removeFromSuperview()
+    if transitionContext.transitionWasCancelled {
+      toVC.view.removeFromSuperview()
+    }
+    transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
+})
+```
+
+위 작업들은 presenting 할 때와 완전히 정반대로 작동한다.
+
+1. 스냅샷 뷰를 줄인다음에, 90도로 회전한다. 그리고 "to" 뷰를 원래의 포지션으로 다시 회전시킨다.
+2. 스냅샷을 지우고 "from" 뷰의 상태를 원래대로 돌려서 뷰 계층에 가했던 변화를 처리한다. 만약 전환이 취소되었다면 전환 전에 뷰 계층에 추가한 것들을 모두 지워야 한다.
+
+이 dismissing하는 애니메이션은 transitioning delegate에서 처리하니 아래의 코드를 CardViewController 쪽에 추가해준다.
+
+```swift
+func animationController(forDismissed dismissed: UIViewController)
+  -> UIViewControllerAnimatedTransitioning? {
+  guard let _ = dismissed as? RevealViewController else {
+    return nil
+  }
+  return FlipDismissAnimationController(destinationFrame: cardView.frame)
+}
+
+```
+
+사실 여기까지 했을 때 예제 사이트에서는 dismiss transition이 정상적으로 작동할 것이라고 했지만 실제로 실행시켰을 때는 애니메이션 후 화면이 까맣게 나왔다. 그래서 다음 예제를 보려고 한다. 실행에서 오류가 있었음에도 이 예제를 글로 썼던 이유는 transitioning 을 위한 기본 구조 설명이 잘 되어 있고, 어떻게 동작하는지 감을 잡을 수 있게 해주는 예제이기 때문이다.
+
+## 2. [Tung Fam](https://medium.com/@tungfam/custom-uiviewcontroller-transitions-in-swift-d1677e5aa0bf) 예제
+
+이 예제는 끝까지 했을 때 가이드에서 나온대로 예상하는 동작이 정상적으로 실행된다. 또한 이 튜토리얼이 설명이 굉장히 자세하기 때문에 글을 직접 읽고 따라하는 것이 많은 도움이 될 것 같다. 이 프로젝트의 전체 코드는 [여기](https://github.com/tungfam/CustomTransitionTutorial)에서 확인이 가능하다. 
+
+### 전제
+
+2개의 뷰가 있다. 첫번째 뷰는 FirstVC, 두번째 뷰는 SecondVC다. 두 뷰 사이의 전환은 1초라고 가정한다. 이 시간동안 시스템에 의해 transition container view라는 새로운 뷰가 제공된다. 그래서 이 뷰는 1초동안 살아있어서 전환 애니메이션을 수행한다. 이 transition container view에 이미지, 라벨, 아이콘 등등을 추가하고 앱에서 일반적으로 애니메이션하는 방법으로 애니메이팅을 할 것이다.
+
+라벨이나 다른 요소들을 애니메이팅하기 위해서는 처음 포지션(frame)과 최종 포지션이 필요하다. 또한 알파 값을 적절히 조정해서 애니메이션을 부드럽게 보여줄 것이다.
+
+### Let’s code 👩‍💻👨‍💻
+
+#### 
+
+
+
+
+
+dddsssfd
+
+
 
 
 
