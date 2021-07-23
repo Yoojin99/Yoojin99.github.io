@@ -13,7 +13,7 @@ header-img:
 
 ---
 
-iOS에는 기본적으로 멋진 view controller transition을 제공한다. Push, pop, cover vertically와 같은 전환이 있지만 이를 커스텀으로 만들 수 있다.
+iOS에는 기본적으로 멋진 view controller transition을 제공한다. Push, pop, cover vertically와 같은 전환이 있지만 이를 커스텀으로 만들 수 있다. 이 글에서는 인터넷에 나와있는 custom transition을 구현하는 예제를 잘 설명한 것을 두 개 볼 것이며, 실제로 다른 custom transition을 구현하는 것을 마지막에 해볼 것이다. 예제는 내가 그냥 정리용으로 써놓은 것이고, 생략한 부분도 있고 예제에서 작동하지 않는 부분도 있기 때문에 예제 부분은 이 글을 보지 않고 그냥 예제 사이트에서 직접 보면서 따라하는 것이 훨씬 도움이 될 것이다. 내가 따로 실제로 구현한 프로젝트만 보려면 맨 밑으로 가면 된다. 
 
 ## Transitioning API
 
@@ -1093,6 +1093,55 @@ func animateTransition(using transitionContext: UIViewControllerContextTransitio
 ![transition6](https://user-images.githubusercontent.com/41438361/126616307-cfc4d674-24a9-4715-a0d4-29f3d62d8543.gif)
 
 이제 닫기 버튼이 적절한 시점에 예쁘게 잘 나오는 것을 확인할 수 있다.
+
+#### Block8: 코너 애니메이션으로 처리하기
+
+마지막으로, 코너를 애니메이션으로 처리할 것이다. 셀은 corner radius가 적용되어 있지만, 컨트롤러의 이미지는 그렇지 않다. 그래서 코너가 둥그런 상태에서 그렇지 않은 상태로 부드럽게 넘어가는 것을 해볼 것이다.
+
+```swift
+// B7 - 55
+let closeButtonRect = secondViewController.closeButton.convert(secondViewController.closeButton.bounds, to: window)
+
+// B4 - 35
+[selectedCellImageViewSnapshot, controllerImageSnapshot].forEach {
+    $0.frame = isPresenting ? cellImageViewRect : controllerImageViewRect
+
+    // B8 - 59
+    $0.layer.cornerRadius = isPresenting ? 12 : 0
+    $0.layer.masksToBounds = true
+}
+
+// B4 - 36
+controllerImageSnapshot.alpha = isPresenting ? 0 : 1
+```
+
+59. 초기 코너 radius를 설정한다. Presenting할 때는 cell과 동일하게, 그렇지 않을 때는 controller와 동일하게 처리한다. 
+
+```swift
+// B3 - 27
+UIView.animateKeyframes(withDuration: Self.duration, delay: 0, options: .calculationModeCubic, animations: {
+
+    UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 1) {
+        ...
+
+        // B8 - 60
+        [controllerImageSnapshot, self.selectedCellImageViewSnapshot].forEach {
+            $0.layer.cornerRadius = isPresenting ? 0 : 12
+        }
+    }
+    ...
+})
+```
+
+60. 최종 Corner Radius 값을 설정한다.
+
+지금까지해서 예제를 모두 마쳤다. 추가적인 팁들은 아래와 같다.
+
+1. 애니메이션이 잘 동작하는 것을 확인하기 위해, animation duration을 증가해보면 된다. 이는 디버깅하는데도 도움이 된다.
+2. 어떤 시점에 뷰의 스냅샷을 찍는지도 중요하다. `afterScreenUpdates`의 값을 true/false로 설정하는지 여부도 중요하다. `animateTransition(using:)` 메서드 안에서 스냅샷을 찍는 것을 추천한다.
+3. FirstVC의 사각형(프레임들)은 Animator의 `init`에서 얻을 수 있다. 하지만 SecondVC는 그 전에 초기화 되어있지 않은 상태였기 때문에, `animateTransition(using:)`에서 얻을 수 있다.
+
+
 
 
 
