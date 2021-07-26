@@ -37,6 +37,51 @@ ViewController는 총 두 개로, 기본이 `ViewController`, 애니메이션을
 
 편의상 **`ViewController`를 from view, `PopupViewController`를 to view라고 하겠다.**
 
-## 1. `UIViewControllerTransitioningDelegate` 프로토콜 채택
+## 1. `UIViewControllerTransitioningDelegate` 프로토콜 채택, delegate 등록
 
-A ViewController에서 B ViewController로 custom transition을 할 때, 
+A ViewController에서 B ViewController로 custom transition을 할 때, B ViewController의 transitioning delegate를 쓰게 된다.
+
+우리는 `ViewController`에서 `PopupVIewController`로 전환을 시도하므로, `ViewController`가 `UIViewControllerTransitioningDelegate`를 따르도록 한 다음에 `PopupViewController`의 transitioning delegate에 `ViewController`를 할당해야 한다.
+
+먼저, ViewController.swift 파일의 맨 아래에 아래와 같이 extension을 추가한다.
+
+```swift
+extension ViewController: UIViewControllerTransitioningDelegate {
+    func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        return nil
+    }
+}
+```
+
+이 `animationController(~~)` 메서드는 애니메이션을 수행하는 animation controller를 리턴한다. 위에서는 presenting 할 때 특정 animation controller를 반환해서 이 컨트롤러를 사용해서 애니메이션을 수행하겠다는 소리가 된다. nil을 리턴하고 있으니 transition 할 때는 default 애니메이션을 이용하게 된다. 
+
+from view가 `UIViewControllerTransitioningDelegate`를 따르니 to view의 transitioning delegate를 from view로 설정해준다.
+
+ViewController.swift의 `vc`를 선언한 부분 밑에 아래와 같이 코드를 작성한다.
+
+```swift
+@objc private func touchGoBtn() {
+        ...
+        let vc = PopupViewController(viewModel: model)
+        vc.modalPresentationStyle = .fullScreen
+        // new
+        vc.transitioningDelegate = self
+        
+        present(vc, animated: true, completion: nil)
+    }
+```
+
+## 2. Animation Controller 만들기
+
+Animator라는 폴더 안에 PopupAnimator.swift라는 파일을 생성했다. 이 애니메이터는 바로 위에서 구현했던 `animationController()`메서드에서 리턴할 애니메이션 컨트롤러가 될 것이다.
+
+
+
+
+
+
+
+
+
+
+
