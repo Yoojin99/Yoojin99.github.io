@@ -115,6 +115,8 @@ optional func interactionControllerForDismissal(using animator: UIViewController
 
 뷰 컨트롤러를 출력할 때 뷰 계층을 관리할 때 사용하는 custom presentation controller를 delegate에 요청한다.
 
+UIKit은 새로운 ViewController를 화면에 그릴 때 UITransitionView를 만들고, 그 위에 ViewController를 그리는데, 이 transitionView를 관리하는 controller라고 생각하면 된다.
+
 ```swift
 optional func presentationController(forPresented presented: UIViewController, 
                           presenting: UIViewController?, 
