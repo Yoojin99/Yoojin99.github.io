@@ -136,9 +136,7 @@ Flow layout은 한 방향에서의 고정된 거리와 다른 쪽의 scrollable 
  
  ## [UICollectionViewFlowLayoutAutomaticSize](https://developer.apple.com/documentation/uikit/uicollectionviewflowlayoutautomaticsize?language=objc)
  
- `estimatedItemSize` 프로퍼티를 이 값으로 설정해서 컬렉션 뷰에서 셀들이 알아서 사이즈가 정해질 수 있도록 한다. 이 값은 non-zero이고, 컬렉션 뷰가
- 셀의 실제 사이즈를 
-
-
-
-dddsss
+ `estimatedItemSize` 프로퍼티를 이 값으로 설정해서 컬렉션 뷰에서 셀들이 알아서 사이즈가 정해질 수 있도록 한다. 이 값은 non-zero이고, 컬렉션 뷰가 셀의 실제 사이즈를 얻기 위해 셀의 [`preferredLayoutAttributesFittingAttributes:`](https://developer.apple.com/documentation/uikit/uicollectionreusableview/1620132-preferredlayoutattributesfitting?language=objc) 메서드를 사용하게 하는 placeholder 값이다.
+ 
+ 
+ 
