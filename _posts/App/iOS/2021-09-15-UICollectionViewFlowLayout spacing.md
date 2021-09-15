@@ -109,6 +109,13 @@ collectionViewLayout.minimumInteritemSpacing = 20
 화면 상에 보이는 아이템 사이의 실제 간격에는 영향을 주지 않고, 반대로 `minimumLineSpacing`은 실제 contentSize에 영향을 주지 않지만
 화면 상에 보이는 아이템 사이의 간격(여기에서는 아이템 사이의 간격이 lineSpacing이 맞다.)에는 영향을 준다는 것이다.
 
+즉 내가 원하는 대로 아이템 사이의 간격에도 변화를 주고 정상적으로 화면에 아이템이 보이게끔 하려면 아래와 같이 `minimumInteritemSpacing`과 `minimumLineSpacing`의 값을 모두 변화시켜야 한다는 것이다.
+
+```swift
+collectionViewLayout.minimumLineSpacing = 4
+collectionViewLayout.minimumInteritemSpacing = 4
+```
+
 여기서 잠시 `minimumInteritemSpacing`과 `minimumLineSpacing`의 개념을 짚고 넘어가면 아래와 같다.
 
 ### minimumInteritemSpacing
@@ -139,6 +146,19 @@ collectionViewLayout.minimumLineSpacing = 20
 
 위와 같이만 작성해도 될 것처럼 보인다. 하지만 실제로 위와 같이만 작성했을 때, lineSpacing이 contentSize에 반영되지 않아 contentSize는 그대로인 반면에 화면에 보이는 lineSpacing은 증가했기 때문에 아이템이 잘려보이는 현상이 발생했다. 그렇다면 왜 `minimumLineSpacing`은 contentSize에 반영이 되지 않고 `minimumInteritemSpacing`이 contentSize에 반영이 되는 것일까? 그리고 작업한 collectionView는 한 줄짜리라 interitemSpacing을 변경해도 contentSize의 width가 아닌 height에 적용되어야 할 것 같은데, 왜 width가 늘어나는 것일까?
 
+대체 왜 이런 현상이 일어나는지 찾아보기 위해 UICollectionView가 spacing을 가지고 contentSize를 계산하는 방법에 대해 구글링을 해봤으나 
+관련된 공식문서나 자료를 많이 찾을 수 없었다. 다만 내가 겪은 현상과 똑같은 현상에 대해 질문한 [stackOverflow의 글](https://stackoverflow.com/questions/42980842/minimuminteritemspacing-is-adding-some-strange-content-at-the-end-of-collection)을 찾을 수 있었다. 하지만 여기에서도 명확한 답을 찾을 수는 없었다.
+
+없으면 답답한 사람이 직접 찾아야 한다고 collectionView의 scrollDirection이 horizontal과 vertical일 때 spacing의 변화가 contentSize에 어떤 영향을 미치는지 직접 알아보기로 했다. ^__^
+
+## Vertical Scroll UICollectionView
+
+먼저 익숙한 세로로 스크롤링 되는 UICollectionView를 만들었다. 일단 UICollectionView는 화면에 꽉 채워지게 설정했다.
+
+![image](https://user-images.githubusercontent.com/41438361/133404616-64f86c6c-1cda-47d8-8d0c-9965c75657e4.png)
+
+## Horizontal Scroll UICollectionView
+
+![image](https://user-images.githubusercontent.com/41438361/133404490-94e0a49c-1d78-4b69-95e5-72ed15f75477.png)
 
 
-dddsss
