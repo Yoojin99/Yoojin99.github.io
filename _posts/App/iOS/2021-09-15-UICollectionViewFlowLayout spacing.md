@@ -153,12 +153,60 @@ collectionViewLayout.minimumLineSpacing = 20
 
 ## Vertical Scroll UICollectionView
 
-먼저 익숙한 세로로 스크롤링 되는 UICollectionView를 만들었다. 일단 UICollectionView는 화면에 꽉 채워지게 설정했다.
+먼저 익숙한 세로로 스크롤링 되는 UICollectionView를 만들고, 화면 밑에 눌렀을 때 collectionView의 contentSize를 출력하게 하는 버튼을 추가했다. UICollectionView는 남은 화면에 꽉 채워지게 설정했다.
 
-![image](https://user-images.githubusercontent.com/41438361/133404616-64f86c6c-1cda-47d8-8d0c-9965c75657e4.png)
+![image](https://user-images.githubusercontent.com/41438361/133407075-533abf0e-2203-41d8-b120-0271ee6d789c.png)
+
+이 상태에서 contentSize를 확인하니 아래와 같이 출력되었다.
+
+![image](https://user-images.githubusercontent.com/41438361/133407192-0b98cdf2-0dce-4a35-9bcd-e3af3e656d57.png)
+
+참고로 저 아이템은 50 x 50 인데, 높이를 보았을 때 50 * 3 + 10(linespacing) * 2 = 170이므로 contentSize의 높이가 170이 나오는 것이 맞다.
+
+이제 lineSpacing을 먼저 바꿔보자. 변화를 알아보기 쉽게 lineSpacing을 50으로 설정했다.
+
+![image](https://user-images.githubusercontent.com/41438361/133408566-1aa16045-3544-4249-8f74-dca1feaa96e1.png)
+
+그리고 contentSize를 출력하니 아래와 같았다.
+
+![image](https://user-images.githubusercontent.com/41438361/133408650-39509ef1-c283-471a-b453-ac61c0c539f3.png)
+
+50 * 3 + 50 * 2 = 250이므로 높이가 250이 되는 것이 맞다.
+
+이번에는 itemSpacing을 바꿨다. lineSpacing을 다시 기본값으로 바꾸고, interitemSpacing을 50으로 설정했다.
+
+![image](https://user-images.githubusercontent.com/41438361/133562472-6e2f2884-cd1d-4338-a320-e82285bdbe3b.png)
+
+![image](https://user-images.githubusercontent.com/41438361/133562502-66d7ae00-a999-4c9d-a063-992d335cbf0e.png)
+
+interItemSpacing이 50으로 설정되어 있으니 한 줄에는 최대 4개의 아이템이 들어가는 것이 맞다. 그리고 변경된 interItemSpacing에 따라 contentSize의 height도 290으로 잘 조정되었다.
+
+
 
 ## Horizontal Scroll UICollectionView
 
-![image](https://user-images.githubusercontent.com/41438361/133404490-94e0a49c-1d78-4b69-95e5-72ed15f75477.png)
+![image](https://user-images.githubusercontent.com/41438361/133407513-4a9ce867-0cbd-4a5a-9e50-48a022e1c22b.png)
+
+아이템 사이즈가 50 x 50일 때의 화면이다. vertical scroll UICollectionView와 달라진 점은, vertical grid에서는 한 행이 채워지면 다음 행으로 넘어가는데, horizontal grid에서는 한 열이 먼저 채워지면 다음 열로 넘어가는 것이다. 즉 줄의 기준이 행에서 열로 바뀐 것을 알 수 있다.
+
+이 때 contentSize를 출력하니 아래와 같았다.
+
+![image](https://user-images.githubusercontent.com/41438361/133407761-2221de55-a2a8-48d8-9451-64019694edff.png)
+
+가로의 길이는 50 * 2 + 10 = 110이 되는 것이 맞다.
+
+이제 lineSpacing을 50으로 설정했다.
+
+![image](https://user-images.githubusercontent.com/41438361/133561958-681069fe-5673-4f35-986b-ab354b8a66e5.png)
+
+contentSize를 출력하니 아래와 같았다.
+
+![image](https://user-images.githubusercontent.com/41438361/133562056-8e35c50c-e523-482d-8648-c945448b53db.png)
+
+* width: 110
+* height: 701
+
+contentSize의 width가 변하지 않았다. 하지만 화면에 실제 보이는 것으로는 lineSpace가 증가한 것이 맞고, 심지어 둘 째 줄의 아이템 사이의 간격이 증가한 형태로 나타났다.
+
 
 
