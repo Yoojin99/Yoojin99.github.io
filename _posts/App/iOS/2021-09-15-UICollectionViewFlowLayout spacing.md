@@ -181,9 +181,19 @@ collectionViewLayout.minimumLineSpacing = 20
 
 interItemSpacing이 50으로 설정되어 있으니 한 줄에는 최대 4개의 아이템이 들어가는 것이 맞다. 그리고 변경된 interItemSpacing에 따라 contentSize의 height도 290으로 잘 조정되었다.
 
+이번에는 lineSpacing과 interItemSpacing을 모두 50으로 설정해줬다.
 
+![image](https://user-images.githubusercontent.com/41438361/133730150-bc34d3ad-7c5f-4aee-a83d-499ac609d4b4.png)
+
+contentSize는 아래와 같다.
+
+![image](https://user-images.githubusercontent.com/41438361/133730171-99356b08-bdc5-4872-8fc0-de4597333df9.png)
+
+높이를 봤을 때, 50 * 5 + 50 * 4 = 450이므로 contentSize가 제대로 출력이 된 것이 맞다.
 
 ## Horizontal Scroll UICollectionView
+
+*화면 캡처를 찍고 나서 알았는데 horizontal이 vertical로 잘못 나왔다. 다시 찍기는 귀찮으니 그냥 무시하자.*
 
 ![image](https://user-images.githubusercontent.com/41438361/133407513-4a9ce867-0cbd-4a5a-9e50-48a022e1c22b.png)
 
@@ -208,5 +218,72 @@ contentSize를 출력하니 아래와 같았다.
 
 contentSize의 width가 변하지 않았다. 하지만 화면에 실제 보이는 것으로는 lineSpace가 증가한 것이 맞고, 심지어 둘 째 줄의 아이템 사이의 간격이 증가한 형태로 나타났다.
 
+이번에는 설정했던 lineSpacing을 다시 기본값으로 설정하고 interItemSpacing을 50으로 설정했다.
+
+![image](https://user-images.githubusercontent.com/41438361/133729683-9dd23776-d18f-4a76-915e-e63f3656b539.png)
+
+contentSize를 출력하니 아래와 같았다.
+
+![image](https://user-images.githubusercontent.com/41438361/133729726-869a750d-27d3-4822-bd65-2402f01750cb.png)
+
+* width: 250
+* height: 701
+
+contentSize의 width가 바뀌었다. 50 * 3 + 10 * 2 = 170이 되어야 하는 듯 하나 실제로 width는 250이 나왔다. 확실히 scrollDirection이
+horizontal일 때 contentSize의 계산이 예상치 못한 방향으로 동작하는 것을 확인할 수 있다.
+
+이번에는 lineSpacing과 interItemSpacing을 모두 50으로 설정해줬다.
+
+![image](https://user-images.githubusercontent.com/41438361/133730269-96b6ba51-ab8c-41e9-a7b3-a89af1b3d5ce.png)
+
+앞서 봤던 상황처럼 lineSpacing와 interItemSpacing을 각각 설정했을 때 예상하지 못한 방향으로 아이템이 화면에 출력되지 않고, 예상한 대로 화면에
+출력되었다.
+
+contentSize를 출력하니 아래와 같았다. 
+
+![image](https://user-images.githubusercontent.com/41438361/133730377-1b75efb7-aae8-4087-bfe6-a3c0a03b6c6d.png)
+
+여기서 유의깊게 봤던 점은 contentSize가 interitemSpacing만 설정했을 때의 contentSize와 같다는 것이다. 다만 lineSpacing과 interItemSpacing의 값을 모두 설정했을 때의 contentSize의 width를 확인하면 50 * 3 + 50 * 2 = 250으로 contentSize가 올바르게 잡힌 것을 확인할 수 있다.
+
+여기까지 테스트한 결과 추측한 바로는,
+
+1. UICollectionView의 `scrollDirection`이 horizontal일 때 `minimumLineSpacing`의 값은 contentSize에 영향을 주지 않는다는 것이다. 하지만 화면에 보이는 아이템들의 실제 배치에는 영향을 준다.
+2. UICollectionView의 `scrollDirection`이 horizontal일 때 `minimumInteritemSpacing`의 값은 contentSize에 영향을 주지 않는다는 것이다. `minimumLineSpacing`과 마찬가지로 화면에 보이는 아이템들의 실제 배치에 영향을 주고, 설정되는 contentSize의 `width`값은 `minimumInteritemSpacing`에 설정된 값 * (아이템의 가로 줄 수(위에서는 3줄이 될 것이다) + 줄 사이의 공백 수(2)) 가 되는 것으로 보인다.
+
+아이템의 개수를 늘려 테스트를 해봤다.
+
+lineSpacing과 interItemSpacing을 모두 50으로 한 상태에서 아이템의 개수를 늘려 화면에 출력해봤다.
+
+![image](https://user-images.githubusercontent.com/41438361/133731302-b948b8ca-1dcb-4010-9c6e-5ea608e94f78.png)
+
+5줄이 나왔고, contentSize를 출력하니 아래와 같이 나왔다.
+
+![image](https://user-images.githubusercontent.com/41438361/133731362-80ab078e-5165-480d-8ab6-fa8fa7726b8b.png)
+
+가로만 보면 50 * 5 + 50 * 4 = 450이 맞다.
+
+이번에는 interItemSpacing만 50으로 설정해서 다시 화면에 출력해봤다.
+
+![image](https://user-images.githubusercontent.com/41438361/133731477-66abbbed-7b8e-40d9-93ef-595a65af670c.png)
+
+그리고 contentSize를 출력했더니 아래와 같았다.
+
+![image](https://user-images.githubusercontent.com/41438361/133731517-f53fd68e-80a0-4140-8827-c3240b696c48.png)
+
+추측했던 대로 contentSize의 width가 잡혔다. 이 가로 길이가 화면의 가로 길이보다 크게 잡혀서 실제로 아래와 같이 가로로 조금 스크롤이 가능하다.
+
+![image](https://user-images.githubusercontent.com/41438361/133731599-348d35e3-b765-4d43-a846-d4dbeee381fa.png)
+
+이번에는 lineSpacing만 50으로 잡아봤다.
+
+![image](https://user-images.githubusercontent.com/41438361/133731723-f02123fe-cfe9-4352-9ef5-8767427bc5b5.png)
+ 
+아이템들 몇 개가 짤려서 화면에서 보이지 않는다. contentSize를 출력하니 아래와 같았다.
+
+![image](https://user-images.githubusercontent.com/41438361/133731820-375abe99-864b-4855-9f87-aba44effac98.png)
+
+contentSize의 width가 170이라 가로가 170을 넘어가는 지점부터 아이템들이 출력이 안되는 것이다. 
+
+이렇게 contentSize가 잘못 나올 때의 해결 방법은 더 찾아보고 이어서 써보도록 하겠다.
 
 
