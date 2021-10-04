@@ -229,3 +229,109 @@ let userDefaultManager = Manager<SomeCodableThing>(storage: Storage(get: { key i
 Protocol witness가 멋지고, 개방-폐쇄 원칙, DIP를 지킬 수 있게 해준다 해도, 코드가 아주 깔끔하지는 않다고 할 수 있다. 그리고 원래의 프로토콜 기반 접근 법에 의해 작성된 코드보다 읽기도 힘들다.
 
 하지만 이런 문제를 해결할 수 있는 방법이 있다. 코드를 리팩토링하고 몇 전역 팩토리 메서드를 제공하는 것이다. 
+
+가장 핵심이 되는 아이디어는 구조체에 몇 기본 구현을 생성하기 위해 `extension`을 만드는 것이다. 그리고, 코드의 여러 부분에서 이를 재사용 한다. 
+
+```swift
+extension Storage {
+    static var keyValue: Self {
+        var memory: [String: T] = [:]
+        
+        return .init { key in
+            return memory[key]
+        } set: { (value, key) in
+            memory[key] = value
+        }
+    }
+    
+    static func userDefaults(using userDefaults: UserDefaults = .standard) -> Self
+    {
+        return .init { key in
+            return userDefaults.object(forKey: key) as? T
+        } set: { (value, key) in
+            userDefaults.setValue(value, forKey: key)
+        }
+
+    }
+}
+```
+
+이 코드에서, 굉장히 적은 줄의 코드로 다른 `Storage` witness를 어떻게 생성하는지 볼 수 있다. `memory` 딕셔너리는 `static` factory에서
+capture된다. 의존성 역전은 `UserDefaults`에도 적용될 수 있다. `manager`에 `userDefualts` 파라미터를 전달함으로써, 주입된 의존성에 의존성을 주입할 수 있다!
+
+사용할 때, 다른 `Storage` 구현체를 전달해서 다른 매니저들을 초기화할 수 있다. 
+
+```swift
+let manager1 = Manager<Something>(storage: .keyValue)
+
+let manager2 = Manager<Int>(storage: .userDefaults())
+
+let customUserDefaults = UserDefaults(suiteName: "custom-suite")!
+let manager3 = Manager<String>(storage: .userDefaults(using: customUserDefaults))
+```
+
+## Use High Order Functions and Keypaths
+
+반복문과 같이 읽기 힘들고 이해하기 어려운 것도 없을 것이다. 가끔 아래와 같이 코딩할 때가 있다.
+
+```swift
+struct SDK {
+    var name: String
+    var version: String
+    var platform: String
+}
+
+let sdks: [SDK] = [
+  .init(name: "device", version: "13.7", platform: "mobile"),
+  .init(name: "simulator", version: "13.7", platform: "mobile"),
+  .init(name: "device", version: "14.4", platform: "mobile"),
+  .init(name: "simulator", version: "14.4", platform: "mobile"),
+  .init(name: "tvOS", version: "3.5", platform: "tv"),
+  .init(name: "tvSimulator", version: "3.5", platform: "tv")
+]
+
+var candidate: SDK? = nil
+
+for sdk in sdks {
+    if sdk.name.lowercased().contains("simulator") && sdk.platform == "mobile" {
+        if let cand = candidate, sdk.version > cand.version {
+            candidate = sdk
+        } else if candidate == nil {
+            candidate = sdk
+        }
+    }
+}
+```
+
+아래 부분의 for in 반복문을 보면, simulator이면서 가장 높은 버전을 가진 애를 추출하려고 하는 것을 알 것이다.
+
+하지만 이를 더 간결하게 표현할 수 있는 방법은 없을까? 바로 함수형 프로그래밍 접근 방법으로 이를 해결해볼 것이다.
+
+먼저, 구조체에 몇가지 기능을 추가해야 한다. 우리는 Swift extension으로 이를 보장할 수 있다.
+
+```swift
+extension SDK: Comparable {
+    var isSimulator: Bool {
+        return self.name.lowercased().contains("simulator")
+    }
+    
+    var isMobile: Bool {
+        return self.platform == "mobile"
+    }
+    
+    static func < (lhs: SDK, rhs: SDK) -> Bool {
+        return lhs.version < rhs.version
+    }
+}
+```
+
+그리고 `for-loop`대신에 collection의 함수 `filter`, `max`를 이용해서 이를 대체한다.
+
+```swift
+let candidate2 = sdks.filter(\.isMobile)
+    .filter(\.isSimulator)
+    .max()
+```
+
+이제 더 간단한 코드로 같은 결과를 얻어낼 수 있다. 또 이 코드는 설명적이기까지 하다. 처음 보는 사람도 이해하기 쉬운 구조를 가지고 있다. 
+
