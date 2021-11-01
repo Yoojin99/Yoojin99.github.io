@@ -58,7 +58,8 @@ https://user-images.githubusercontent.com/41438361/139093612-4f1792f2-f9ac-4450-
 실제로는 아래로 굉장히 조금 드래그 했는데, 위와 같이 굉장히 아래로 뷰가 빠르게 내려갔다.
 
 위에서 봤던 메서드는 gestureRecognizer가 이벤트를 감지했을 때마다 실행되는 메서드라 실행될 때마다 `bottomSheetViewTopConstraint.constant`가 드래그 된 위치로 업데이트 되었고, `translation.y`는 아래로 드래그 할 수록
-점점 증가하니 이 `bottomSheetViewTopConstraint.constant`가 결국 드래그 시간이 지날수록 엄청나게 커지게 되었다.
+점점 증가하니 이 `bottomSheetViewTopConstraint.constant`가 결국 드래그 시간이 지날수록 엄청나게 커지게 되었다. `translation.y`는
+처음 panGesture가 인식된 점을 기준으로 구해지기 때문에 점점 증가하는 것이다.
 
 즉 내가 처음 예상했던 동작은
 
