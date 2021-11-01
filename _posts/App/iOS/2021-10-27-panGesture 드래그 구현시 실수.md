@@ -100,3 +100,25 @@ constant는 사용자가 아래로 내린 1이 더해져서 1이 된다. 그리�
 ![Simulator Screen Recording - iPhone 13 Pro Max - 2021-10-28 at 00 14 06](https://user-images.githubusercontent.com/41438361/139095057-694ebb35-6dac-4599-bad2-4621d3b64967.gif)
 
 gesture가 발생할 때마다 함수가 반복적으로 실행되는 건 당연한데 이 기본적인 내용을 생각을 못해서 시간을 썼나 싶다... ^ㅡ^ 그래도 이제 안 헷갈리면 되겠지
+
++ 추가
+
+물론 아래와 같이 `setTranslation`을 통해서 코드를 좀 더 간단하게 만들어서 같은 동작을 구현할 수도 있지만, 나는 panning을 시작한 처음 기준점에서
+내린 높이에 따라 다른 동작을 구현했기 때문에 이를 여기서는 사용하지 않았다.
+
+```swift
+@objc private func viewPanned(_ panGestureRecognizer: UIPanGestureRecognizer) {
+    let translation = panGestureRecognizer.translation(in: self.view)
+
+    switch panGestureRecognizer.state {
+        case .changed:
+            if translation.y > 0 {
+                bottomSheetViewTopConstraint.constant += translation.y
+            }
+        default:
+            break
+    }
+    
+    panGestureRecognizer.setTranslation(.zero, in: self.view)
+}
+```
