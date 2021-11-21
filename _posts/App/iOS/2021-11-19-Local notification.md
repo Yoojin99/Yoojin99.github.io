@@ -211,9 +211,29 @@ func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent noti
 
 ![image](https://user-images.githubusercontent.com/41438361/142589125-4ec20e0e-0bab-426a-b1e4-7712316b3bad.png)
 
-앱이 foreground에 있는 상태에서도 알림이 잘 뜬다! 다만 앱이 꺼져도 알림이 남아있는 것을 원했는데, 앱을 끄면 바로 알림도 꺼지게 된다.
+앱이 foreground에 있는 상태에서도 알림이 잘 뜬다! 
 
+### 알림 지속
 
+다만 앱이 꺼져도 알림이 남아있는 것을 원했는데, 앱을 끄면 바로 알림도 꺼지게 된다. 갑자기 앱이 백그라운드에 있을 때 알림이 오고, 앱을 키면 이 알림이 남아있는지 궁금해서 테스트를 해봤다.
+
+1. Foreground Notification
+  ![foreground](https://user-images.githubusercontent.com/41438361/142754121-207bed21-60f0-4962-a264-58bdf35ad9cb.gif)
+  위에서 볼 수 있듯이 앱이 foreground에 있을 때 알림이 뜨고, 이 상태에서 홈으로 가면 앱이 닫힘과 동시에 알림도 화면에서 사라지게 된다.
+2. Background Notification
+  ![background](https://user-images.githubusercontent.com/41438361/142754230-995bd887-7f33-4066-9a30-adb714e243e2.gif)
+  이번에는 알림에 스케줄을 적용해서 버튼을 누르고 5초 후에 알림이 뜨게 했다. 버튼을 누르고, 앱을 닫은 다음 기다리니 알림이 뜬다. 하지만 이 상태에서 
+  앱을 띄우니 띄우자마자 알림이 화면에서 사라지는 모습을 볼 수 있다. 
+
+### 다른 앱을 띄우고 알림 띄우기
+
+알림을 띄울 때 completionHandler를 응용해서 특정 동작을 성공한 후에 알림이 뜨게 조정할 수도 있다. 
+
+![image](https://user-images.githubusercontent.com/41438361/142754980-d44d59ca-a96f-4b0b-96f5-d2554fa34e1a.png)
+
+![withSafari](https://user-images.githubusercontent.com/41438361/142754966-6a32f3de-3e99-448e-aa03-e82d4739865b.gif)
+
+다만 다른 앱에서 버튼을 눌렀을 때 이런 알림이 뜬다든지 하는 조건이 추가되면 알림을 어떻게 띄울지도 생각해봐야 할 것 같다.
 
 * 참조
 * https://developer.apple.com/documentation/usernotifications
