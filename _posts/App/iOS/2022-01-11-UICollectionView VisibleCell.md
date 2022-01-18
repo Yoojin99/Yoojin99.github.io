@@ -208,9 +208,88 @@ bounds 사각형은 frame 사각형과 같이 view의 보여질 수 있는 부�
 
 ### convert
 
-이제 frame과 bounds에 대해서는 알아봤으니, 다시 view.convert로 돌아와보자. 
+이제 frame과 bounds에 대해서는 알아봤으니, 다시 view.convert로 돌아와보자. 하위 뷰의 정확한 위치를 알면 여러 상황에서 편리해질 수 있다. 예를 들어 특정 뷰가 사용자에게 보여지는 지 알고 싶을 수도 있고, 뷰의 처음 포지션에서 애니메이션을 수행하거나 원래의 목적지로 뷰를 다시 되돌릴 수도 있다. 하지만 이런 것들을 하려면 부모 뷰들의 좌표계의 일부인 타겟 뷰들의 프레임에 단순히 의존할 수 없다. 이는 내가 어떻게 뷰 계층을 구성하느냐에 따라 다른 이슈들을 만들어낼 수 있다. 하지만 UIView에서는 두 다른 좌표계 사이에 프레임을 변환할 수 있는 메서드를 제공하고 있다.
 
+```swift
+import UIKit
 
+let frame = CGRect(origin: .zero,
+                   size: .init(width: 150, height: 150))
+let window = UIWindow(frame: frame)
+let rootView = UIView(frame: window.bounds)
+rootView.backgroundColor = .white
+window.addSubview(rootView)
 
+let view = UIView(frame: CGRect(origin: .init(x: 25, y: 25),
+                                   size: CGSize(width: 100, height: 100)))
+view.backgroundColor = UIColor.green.withAlphaComponent(0.5)
+rootView.addSubview(view)
 
+let subview = UIView(frame: CGRect(origin: .init(x: 25, y: 25),
+                                   size: .init(width: 50, height: 50)))
+subview.backgroundColor = UIColor.blue.withAlphaComponent(0.5)
+view.addSubview(subview)
 
+let convertToWindow = subview.convert(subview.bounds, to: window)
+
+// {x 25 y 25 w 50 h 50 }
+subview.frame
+// {x 50 y 50 w 50 h 50 }
+convertToWindow
+
+window.makeKeyAndVisible()
+
+import PlaygroundSupport
+PlaygroundPage.current.needsIndefiniteExecution = true
+PlaygroundPage.current.liveView = window
+```
+
+먼저 `UIWindow`를 만든다. window에 frame을 주고 생성한 rootView를 window에 붙인다. 그리고 view와 subview를 만들었다. 이 상황에서 우리가 알고 싶은 게 스크린 상의 subview의 정확한 포지션이라고 해보자. 
+
+subview의 frame은 convert 하기 전에는 아래와 같이 나온다.
+
+![image](https://user-images.githubusercontent.com/41438361/149878235-016cfaf6-4b5e-4a05-b187-86b5f834d6bc.png)
+
+현재의 frame과 이를 우리가 원하는 좌표계와 함께 설정하면 우리가 원하는 값을 얻을 수 있게 된다. 위의 코드에서는 subview의 bounds를 window 상의 좌표계로 변환했을 때의 위치를 출력했다.
+
+![image](https://user-images.githubusercontent.com/41438361/149878418-f4040195-c4bb-4a3f-b32f-e9bbc7af5b17.png)
+
+구현할 때 뷰의 window에 접근하는 것은 필요없을 수 있다. 모든 UIView는 그것이 속한 window에 optional 참조를 갖고 있기 때문에 이 값이 nil이라면 view가 아직 window에 추가되지 않았음을 의미하게 된다. 
+
+추가로, 프레임 대신에 point들을 가지고 convert를 할 수도 있다. 
+
+![image](https://user-images.githubusercontent.com/41438361/149855706-f91a0c70-da3e-41f7-bf80-ace93ecfd504.png)
+
+이 메서드들은 UIWindow에서도 사용할 수 있는데, 이는 UIWindow는 UIView를 상속하고 UIView는 UICoordinateSpace를 따르기 때문이다.
+
+추가로 point를 바꾸는 작업도 해봤다.
+
+![image](https://user-images.githubusercontent.com/41438361/149856898-4240bcc1-a5e0-48f0-8daf-68315415eef8.png)
+
+이렇게 두 뷰를 만들고, convert 함수를 이용해서 (200,200)을 convert 해봤다.
+
+```swift
+let firstView: UIView = {
+    let view = UIView(frame: CGRect(x: 100, y: 100, width: 100, height: 100))
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.backgroundColor = .systemRed
+    return view
+}()
+
+let secondView: UIView = {
+    let view = UIView(frame: CGRect(x: 250, y: 250, width: 100, height: 100))
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.backgroundColor = .systemOrange
+    return view
+}()
+
+...
+
+print(firstView.convert(CGPoint(x: 200, y: 200), to: secondView))
+```
+
+![image](https://user-images.githubusercontent.com/41438361/149857443-93710a96-a4b1-4360-9f14-d28015ca8a75.png)
+
+즉 아래와 같이 (200,200) 점을 secondView의 좌표계의 point로 변환했더니 (50,50) 가 된 것이다.
+
+![image](https://user-images.githubusercontent.com/41438361/149859020-6b3c04e1-afbb-4eb1-a999-27977795dc2f.png)
