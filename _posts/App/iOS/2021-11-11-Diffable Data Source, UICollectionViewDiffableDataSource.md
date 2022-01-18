@@ -17,81 +17,97 @@ header-img:
 
 Diffable에 관한 내용은 이전에 여러 번 정리해둔 것이 있다. (https://yoojin99.github.io/app/Ordered-Collection-Diffing/)
 
-Ordered collection diffing은 값을 비교할 수 있는 요소들을 가진 컬렉션에 적용된 변화를 파악하고, 변화를 적용하기 쉽게 해준다. 그렇다면 Diffable DataSource는
-대략적으로 Datasource에 diffable한 기능을 더한 것이라고 생각해볼 수 있다.
+Ordered collection diffing은 값을 비교할 수 있는 요소들을 가진 컬렉션에 적용된 변화를 파악하고, 변화를 적용하기 쉽게 해준다. 그렇다면 Diffable DataSource는 대략적으로 Datasource에 diffable한 기능을 더한 것이라고 생각해볼 수 있다.
 
 이 Diffable Datasource를 다룬 [WWDC19](https://developer.apple.com/videos/play/wwdc2019/220/)영상이 있다.
 
-이 Diffable Datasource가 등장하게 된 배경을 보자. UITableView/CollectionView를 가지고 작업을 했다면 아래와 같은 코드를 작성한 적이 있을 것이다.
+## WWDC19 - Advances in UI Data Sources
 
-![image](https://user-images.githubusercontent.com/41438361/141249120-89b08aae-3c2d-47be-ae41-98b7a1129ca1.png)
+이 WWDC19 세션에서는 아래의 네 가지를 얘기하고 있다.
 
-이 메서드들을 통해 섹션의 수와 섹션 안의 아이템의 수를 제공하고, 이 작업은 굉장히 간단하다. 이 메서드들은 간단하기도 하지만, 굉장히 유연하다. 그 이유는
-데이터 소스에 특별한 데이터 구조를 사용할 필요가 없기 때문이다. 데이터 소스는 일차원, 좀 더 복잡해지면 이차원의 배열을 사용할 수도 있을 것이다.
+1. 현재의 state-of-the-art(최신식). 지금(이 발표가 있던 2019년) data source와 어떻게 상호작용하는가?
+2. 새로운 접근법. iOS, tvOS, Mac에 새로 도입한 접근법을 얘기한다.
+3. Demo. 새로운 API로 구현한 데모들을 본다.
+4. Consideration. 이 API를 최대로 활용하는 방법에 대한 고찰
 
-하지만 앱은 실제로 일차원이나 이차원 배열보다 훨씬 더 복잡하다. 데이터 소스는 앱 내의 복잡한 controller에 의해 뒷받침 되는 경우도 있다. 또한
-컨트롤러들은 굉장히 다양한 작업들을 하는데, Core Data와 상호작용할 수도 있고 web service를 다루고 있을 수도 있다. 그리고 이런 작업들을 굉장히
-빨리 시각화하고 싶은 것이다.
+순서대로 이 발표를 정리해보겠다.
 
-데이터를 가져오기 위해 UI layer와 controller layer 사이의 소통을 보면, UI 레이어에서 Controller layer쪽으로 아이템과 cell을 달라고 요청한다.
+### 1. Current state-of-the-art
 
-![image](https://user-images.githubusercontent.com/41438361/141251056-1ced328c-7c88-4fe0-a46f-687d3383e9a8.png)
+UITableView와 collection view들은 UI data source와 어떻게 상호작용할까?
 
-하지만 이보다 더 복잡한 상황들이 많이 생길 수 있다. 이 controller가 응답을 받는 web service request를 가지고 있다고 해보자. 응답값, 데이터를 받으면
-controller layer는 무언가가 변했음을 알린다. 그리고 이런 변화를 UI layer에 바녕해야 한다. 그리고 이런 변화들은 TableView와 CollectionView에 
-도 적용되어야 한다. 이런 작업들은 확실히 이전에 봤던 작업보다 복잡하다. 
+![image](https://user-images.githubusercontent.com/41438361/149882174-406c9918-9a58-458a-9f38-28f5637d58c3.png)
 
-![image](https://user-images.githubusercontent.com/41438361/141251508-9edbe953-95b9-4bf9-a45b-70a49ba43b0b.png)
+위의 코드와 같이 섹션의 수, 섹션 안에 아이템의 수, 그리고 cell을 요청한다. 직관적인 방법으로, 이를 약 10년 정도 사용했다. 이 방법은 적은 수의 메서드를 작성하고, 빠르게 반복할 수 있으면서도 유연한 방법이다. 왜냐하면 data source에 제공할 데이터 구조가 정해져 있지 않기 때문이다. 일차원 배열이 될 수도 있고, 만약 섹션이 여러개고 아이템도 여러 개라면 아마 이차원 배열이 될 것이다. 
 
-그리고 이런 상황에서 아래의 에러를 본 사람들도 많을 것이다.
+물론 간단하고 직관적이지만, 일차원-이차원 배열을 사용할 때보다 앱은 더 복잡해졌고, 더 복잡해지고 있다. 앱은 더 많은 기능을 수행하고, data source들은 앱 내의 복잡한 controller에 의해 뒷받침된다. 이 controller들은 또 다양한 작업들을 한다. Core Data와 상호작용할 수 있고, 웹 서비스와 통신하는 등 굉장히 많은 작업들을 한다.
 
-![image](https://user-images.githubusercontent.com/41438361/141251668-75161882-5ed4-443e-9374-61b128dfb00a.png)
+그리고 이렇게 data를 불러오기 위해 힘들고 많은 작업을 하는 controller layer와 UI layer 간의 소통을 보면, UI layer는 Controller layer에 "출력할 섹션이나 cell을 줘"라고 요청한다. 
 
-설명을 보니 collection view가 알고 있는 자신의 데이터의 개수와 실제로 주어진 데이터의 개수가 달라 발생한 문제로 보인다. 이 상황에서의 해결법은 reloadData를 호출하는 것이지만,
-이러면 애니메이션이 적용되지 않은 상태로 화면이 나타나게 된다. 이는 사용성을 굉장히 떨어뜨린다. 
+![image](https://user-images.githubusercontent.com/41438361/149883250-a70219fb-4b58-441b-b973-1c71ac32ecb7.png)
 
-그렇다면 앞에서 봤던 UI가 들고 있는 정보, 또 실제로 변화한 데이터들을 가지고 있는 Data source(Data controller)가 있다. 그니까 UI도 자신만의
-버전을 들고 있고, controller도 자신만의 정보를 들고 있다. 그리고 UILayerCode가 이 둘의 sync를 맞추기 위한 책임이 있다. 하지만 앞에서 봤던 
-에러가 뜨는 것처럼 이게 쉽지는 않다. 
+위의 상황은 직관적이고, 간단하지만 더 복잡한 상황들이 생기게 된다. 예를 들어 controller가 웹 서비스 요청을 하고 응답을 받았다고 해보자. 이 응답을 받으면 controller layer는 "내 뭔가가 바뀌었다"라고 알려야 한다. 그럼 이제 UI layer가 결정을 해야 하는데, controller가 알린 변화를 UI layer에 업데이트 해야 할 것이다. 이 업데이트에는 table view와 collection view에 적용되어야 할 변화들이 있을 것이다.
 
-그래서 이 발표가 나온 시점에서 이 문제에 대한 최점단 접근 방법은 에러 자체를 방지하는 것이었고, 이는 중앙화된 버전에 대한 개념이 없기 때문이었다.
+![image](https://user-images.githubusercontent.com/41438361/149884025-a963763d-4227-42a1-b2e6-999cbc41084a.png)
 
-그리고, 새로운 접근 방법인 **DiffableDataSource**가 나오게 되었다. 
+이는 복잡한 작업인데, batch update를 적절히 수행하고, backing store를 변경하는 등의 작업 등등이 필요하다. 물론 잘 해결할 수도 있겠지만 이런 때에 아래와 같은 에러를 보게 된다.
 
-![image](https://user-images.githubusercontent.com/41438361/141253196-96eb0af8-4e30-4241-8591-348781c1de17.png)
+![image](https://user-images.githubusercontent.com/41438361/149888409-ca441bde-9a4c-4984-990b-a4ae5d8a02e0.png)
 
-DiffableDataSource는
+이 문제의 해결방법은 그냥 `reloadData`를 호출하는 건데, 이는 애니메이션을 보여주지 않는다. 그리고 이는 사용성을 떨어뜨린다.
 
-1. PerformBatchUpdates가 없다.
-2. 크래시, 혼란, 복잡함, 그리고 처리하고 싶지 않았던 모든 것들이 제거되었다.
+그렇다면 여기서의 문제는 무엇일까? 문제의 모든 답을 가지고 있는 주체는 누구인가? 여기서 문제는 **data source가 시간에 따라 바뀌는 자신만의 truth를 가진다는 것이다. UI도 자신만의 truth를 가지고 있다.** 그리고 UILayerCode는 이를 완화시켜서 모든 것이 동기화 되어 있도록 하는 책임이 있다. 하지만 위에서 에러가 뜨는 걸 봤듯이 이게 어려울 때도 있다. 그래서 현재의 접근법은 에러를 발생시키는 경향이 있다. 그리고 이는 **중앙화된 truth라는 개념이 없기 때문이다.**
 
-위의 사항 대신, Apply라는 단일 메서드를 가지게 되었다. Apply는 간단하고, 자동적이며, 앞에서 말한 복잡한 것들이 사라진 diffing이다.
+![image](https://user-images.githubusercontent.com/41438361/149888780-29775015-2784-4f14-ad87-84a1193f2050.png)
 
-![image](https://user-images.githubusercontent.com/41438361/141412490-fca59185-c87d-4408-9297-d25e759682c5.png)
+### 2. A new approach
 
-대신, Snapshot이라고 부르는 새로운 구조로 이를 수행한다. 스냅샷은 현재 UI 상태의 진실한 버전을 가지고 있다.
+위에서 최신식의 접근법을 봤고, 발생할 수 있는 문제들을 봤다. 여기에서 새로운 접근법인 **DiffableDataSource**가 등장하게 된다.
 
-그리고 IndexPath대신에 identifier를 사용하는 것 같다. 그래서 update를 IndexPath로 하지 않고, identifier로 하게 된다.
+DiffableDataSource는 `performBatchUpdates`가 없기 때문에 이와 관련된 크래시, 복잡성, 그리고 다루지 않고 싶었던 것들도 함께 버려졌다. 대신, `apply`가 등장했다. Apply는 간단하고, 자동적이며 혼란이 없는 diffing이다.
 
-![image](https://user-images.githubusercontent.com/41438361/141412774-1ac54db6-923a-44ff-b1f4-35062d7c9b58.png)
+![image](https://user-images.githubusercontent.com/41438361/149889722-847420f5-09b2-4e75-942d-8608fb682954.png)
 
-여기 예시가 있다. FOO, BAR, BIF가 화면에 있고, 얘네들은 앱에서의 identifier들이다. 그리고 우리의 컨트롤러가 바뀌었다고 해보자.
-그러면 우리는 적용하고 싶은 새로운 Snapshot을 가지게 된다. 새로운 Snapshot과 이전의 Snapshot을 비교해서, 몇 개는 순서가 바뀌고, 새로운
-아이템이 들어온 것을 알 수 있다.
+그리고 이를 **Snapshot**이라 부르는 새로운 구조로 이를 수행한다. Snapshot은 굉장히 간단한 아이디어로, **현재 UI 상태의 truth이다.**
+또 snapshot은 IndexPath 대신 모두 유일한 섹션 identifier들과 item identifier들의 연결 또는 컬렉션이다. 그래서 IndexPath로 업데이트하지 않고, identifier로 업데이트하게 된다.
 
-그래서 개념적으로는 Apply는 현재의 상태를 알고 새로운 상태를 알고 있다. 그래서 변경된 내용을 적용하면 끝이다. 
+![image](https://user-images.githubusercontent.com/41438361/149890402-f062c7e1-a40d-404e-9478-6737ab8c4f1b.png)
 
-iOS에서 TVoS에서는 UICollectionViewDiffableDataSource, 그리고 UITableViewDiffableDataSource가 있다.
+어떤 일이 일어나는 지를 시각화해봤다. 처음에 FOO, BAR, BIF가 화면에 있고, 이는 앱 내의 identifier들이다.
 
-그리고 모든 플랫폼에서 공통되는 것은 현재의 UIState에 대한 책임을 지고 있는 NSDiffableDataSourceSnapshot이 있다.
+![image](https://user-images.githubusercontent.com/41438361/149890570-17804be0-ca99-4ceb-af1d-186a46aa9e86.png)
 
-코드를 보면 세 단계로 이를 수행할 수 있다. 내가 Collection View와 UITableView의 data에 변화를 주고 싶다면, Snapshot을 만들면 된다. Snapshot을 내가 update cycle에서 출력하고 싶은 아이템들에 대한 설명과 함께 Snapshot을 생성하면 된다. 그리고 Snapshot을 변화를 UI를 적용하기 위해 apply한다. DiffableDataSource는 UI 요소에 대한 diffing과 변화를 관리한다.
+그리고 이제 우리의 controller가 변했다. 그리고 아래와 같이 적용하고 싶은 새로운 Snapshot이 생겼다. 어떻게 이 새로운 truth를 현재의 Snapshot에 가져올 수 있을까? 보면 새로운 스냅샷은 BAR, FOO, BAZ로 되어 있고 몇몇은 순서가 바뀌어 있는 걸 볼 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/149890902-20e5b589-df6e-41f6-b27c-2d0a7ae6a49e.png)
+
+개념적으로 Apply는 현재의 state를 알고 있고 새로운 state에 있는 걸 알고 있다. 그리고 단순히 그 차이를 적용해서 아래와 같이 변경사항을 적용한다.
+
+![image](https://user-images.githubusercontent.com/41438361/149891266-37cc9370-992c-4efc-80d4-e1313a9def3c.png)
+
+그럼 이를 어떻게 사용할까?
+
+* iOS, TVoS : UICollectionViewDiffableDataSource, UITableViewDiffableDataSource
+* Mac : NSCollectionViewDiffableDataSource
+
+그리고 모든 플랫폼에는 현재의 UIState NSDiffableData SourceSnapshot를 책임지는 Snapshot 클래스가 있다.
+
+### 3. Demos
+
+이제 코드를 보자. [프로젝트는 여기에서 받을 수 있다.](https://developer.apple.com/documentation/uikit/views_and_controls/collection_views/implementing_modern_collection_views)
+
+이 데모에서는 DiffableDataSource로 세 개의 다른 예시를 구현했다. 세 개의 예시를 하나씩 차례로 볼 텐데, 모두 세 단계로 이루어져 있다. 변화를 주고 싶을 때, Collection view나 UITableview에 full data source와 함께 새로운 데이터를 넣고 싶다면 Snapshot을 생성하면 된다. Update cycle에 출력하고 싶은 아이템들에 대한 설명과 함께 Snapshot을 생성한다. 그리고 Snapshot을 적용해 자동으로 UI에 수정사항이 적용되도록 한다. DiffableDataSource는 UI 요소에 변화를 일으키는 모든 diffing과 변화들을 관리한다.
+
+#### 1. Mountain Search
+
+이 예시는 상단의 검색창에 산 이름을 검색하면 검색하는 단어에 따라 애니메이션으로 밑에 검색 결과가 나오는 예시다. 이 작업은 자동적이며 애니메이션과 함께 일어난다. 
 
 ![diff1](https://user-images.githubusercontent.com/41438361/141413978-c327cc7b-0602-4ac6-855d-4b915175c585.gif)
 
-위의 예시는 이 WWDC 발표에서 예시로 발표한 영상인데, 보면 검색하는 단어가 달라질때마다 아래에 나타나는 결과가 애니메이션과 함께 다르게 보여진다.
 
-![image](https://user-images.githubusercontent.com/41438361/141414249-17cca811-b217-4ef8-bbdd-e0ed30089d98.png)
+
+
+### 4. Considerations
 
 ### 1. 새로운 NSDiffableDataSourceSnapshot 생성
 
