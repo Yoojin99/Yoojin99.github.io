@@ -104,87 +104,237 @@ DiffableDataSource는 `performBatchUpdates`가 없기 때문에 이와 관련된
 
 ![diff1](https://user-images.githubusercontent.com/41438361/141413978-c327cc7b-0602-4ac6-855d-4b915175c585.gif)
 
-
-
-
-### 4. Considerations
-
-### 1. 새로운 NSDiffableDataSourceSnapshot 생성
-
-새로운 NSDiffableDataSourceSnapshot을 생성한다. 얘는 초기에는 비어있고 아무것도 가지고 있지 않다. 그래서 우리가 원하는 섹션과 아이템을 채우는 것은 우리가 해야 한다. 그리고 여기에서는 출력할 섹션이 하나밖에 없다. 여기서는 main이라는 섹션을 추가한다. 그리고 우리가 이 업데이트에서 출력하고 싶은 아이템들의 identifier들을 추가한다. 보통 여기에서는 identifier들의 배열을 전달하지만, Swift에서는 편의상 내가 생성한 나만의 타입들을 전달할 수도 있다. Struct나 enum과 같은 값 타입이더라도, hashable하게 만들면 나만의 객체를 전달할 수도 있다.
-
-Snapshot은 제네릭 클래스이기 때문에, SectionIdentifierType과 ItemIdentifierType으로 인수를 받게 되어있다. 그래서 SectionIdentifierType을 먼저 보면, 이걸 위한 enum을 선언해도 된다. Enum은 자동으로 hashable하기 때문에, 그냥 enum을 선언해서 사용하면 된다.
-
-그리고 mountaintype도 보면, mountain도 struct로 선언했다. Struct type도 hashable하기 때문에, identifier로 DiffableDataSource에
-전달하기 보다는 그 자체를 전달하는 것이 좋다. 여기서 중ㅇ한 것은 각 mountain은 각각의 hash 값으로 uniquely identifiable하기 때문에
-mountain을 자동으로 unique identifier로 생성하는 것이 가능해진다.
-
-
-## 2. DiffableDataSource에게 snapshot으로 변화를 애니메이션으로 표현하는 것을 처리하게 한다.
-
-이 예제에서는 collectionview로 작업을 하고 있기 때문에, UICollectionViewDiffableDataSource를 section과 item type으로 생성한다.
-그리고 collectionView에 pointer를 제공한다. 이러면 DiffableDataSource는 이 포인터를 가지고 자동으로 collectionView의 데이터 소스와 자기자신을 엮을 것이다. 
-
-DiffableDataSource는 자동으로 이전 업데이트와 다음 업데이트 사이에 무엇이 바뀌었는지를 찾아낸다. 
-
-## 3. 
-
-![image](https://user-images.githubusercontent.com/41438361/141416669-3a105685-d6be-4407-a2ed-1ad2d33933d5.png)
-
-CollectionView에 콜백을 통해 데이터를 출력하고 싶은 적절한 타입의 cell을 요청한다. 그리고 이 cell을 생성하고 리턴한다. 그래서 이건 cellForItemAt IndexPath 코드를 우리가 data source를 생성할 때 전달하는 클로저안에 심는 것이랑 같은 작업이다. 
-
-그래서 정리하자면 세 단계는 아래와 같이 정리할 수 있다. 
-
-1. 스냅샷 생성
-2. 스냅샷 구성
-3. Apply
-
-이제는 performBatchUpdates를 더 이상 호출하지 않고 apply 메서드를 호출하면 된다. 
-
-스냅샷을 만드는데는 두 가지 방법이 있다.
-
-1. 빈 스냅샷 생성 -> 스냅샷 section과 item의 타입을 지정해서 생성한다.
-2. 현재 상태의 스냅샷에서 하나를 생성 -> 변화가 작은 것일 때 이를 사용하면 좋다.
-
-![image](https://user-images.githubusercontent.com/41438361/141419884-dbe0eab9-afef-4ae3-8e9f-13c6cfb291c3.png)
-
-
-
-
-이번에는 collection view에 cell을 제공하고 데이터를 관리하는데 사용할 수 있는 `UICollectionViewDiffableDataSource`에 대해 알아보려고 한다.
-얘는 iOS 13이상부터 사용 가능하다.
+이 모든 동작을 보면 사용자가 검색창에 타이핑을 시작할 때 시작한다. 그래서 `searchBarTextDidChange` 라는 callback이 있고, 이 callback은 controller에 전달된다.
 
 ```swift
-@MainActor class UICollectionViewDiffableDataSource<SectionIdentifierType, ItemIdentifierType> : NSObject where SectionIdentifierType : Hashable, ItemIdentifierType : Hashable
-```
-
-보니 Hashable한 SectionIdentifierType, ItemIdentifierType을 가지고 있다. Hashable한 성질을 이용해서 diffing을 계산하는 것 같다.
-
-*Diffable data source* 객체는 collection view 객체와 같이 동작하는 특별한 타입의 data source다. Collection view의 데이터와 UI를
-간단하고, 효율적인 방법으로 관리하기 위해 필요한 행위들을 제공한다. 또한 `UICollectionViewDataSource` 프로토콜을 채택하고 있어서 이 프로토콜의 메서드들도
-사용이 가능하다.
-
-Collection view를 데이터로 채우려면 아래와 같이 하면 된다.
-
-1. Diffable data source를 collection view에 연결한다.
-2. Collection view의 cell들을 구성할 cell provider를 구현한다.
-3. 데이터의 현재 상태를 생성한다.
-4. 데이터를 UI에 출력한다.
-
-Diffable data source를 collection view에 연결하려면, diffable data source를 `init(collectionView: cellProvider: )` 이니셜라이저를
-사용해서 생성하고, 이 데이터 소스에 연결하고 싶은 collection view에 전달하면 된다. 또한 UI에 cell을 구성하는 cell provider에도 전달한다.
-
-```swift
-dataSource = UICollectionViewDiffableDataSource<Int, UUID>(collectionView: collectionView) {
-    (collectionView: UICollectionView, indexPath: IndexPath, itemIdentifier: UUID) -> UICollectionViewCell? in
-    // Configure and return cell.
+extension MountainsWindowController: NSSearchFieldDelegate {
+    func controlTextDidChange(_ obj: Notification) {
+        performQuery(with: searchField.stringValue)
+    }
 }
 ```
 
-그리고 스냅샷을 만들고 적용해서 데이터의 현재 상태를 생성하고 데이터를 출력한다. 더 자세한 내용은 `NSDiffableDataSourceSnapshot`을 참고하면 된다.
+`performQuery` 함수에는 검색창에 있는 검색어를 전달해준다. `performQuery` 함수 자체는 매우 간단하다. `MountainsController`라는 모델 레이어 객체를 호출한다. 그리고 검색된 단어에 맞는 산들만 필터링 된 결과를 요청한다. 이러면 우리는 산들의 리스트를 받을 수 있다. 그리고 위에서 언급한 세단계를 수행한다. **먼저 새로운 NSDiffableDataSourceSnapshot을 생성한다.** 이 Snapshot은 처음에는 비어있다. 그래서 우리가 원하는 섹션과 아이템을 채우는 것은 우리의 몫이다. 이 케이스에서 우리는 출력할 섹션이 하나밖에 없기 때문에 하나의 섹션을 추가하고, 이를 main section이라 부를 것이다. 그리고 이번 업데이트에 출력하고 싶은 아이템들의 identifier들을 추가한다. 여기서의 예제를 보면 identifier들의 배열을 전달하고 있다. 하지만 Swift에서는 자신만의 native type들을 사용해서 더 고급스럽게 표현할 수도 있다. Native type이 될 수도 있고, 값 타입(struct/enum)이 될 수도 있는데 이 타입을 hashable하게 만든다면 이 객체들을 전달할 수도 있다. 이제 Snapshot은 다 만들었으니 DiffableDataSource에 이 snapshot을 적용해서 차이를 애니메이션으로 보여달라고 요청한다. DiffableDataSource는 자동적으로 이전 업데이트와 다음 업데이 사이에 바뀐 점들을 찾아낸다.
 
-**Diffable data source로 collection view를 구성하고 나서 dataSource를 변경하면 안 된다. 만약 collection view가 내가 초기에 설정한 데이터 소스 말고
-새로운 데이터 소스가 필요하다면, 새로운 collection view와 diffable data source를 만들어서 구성해야 한다.**
+```swift
+private func performQuery(with filter: String?) {
+    let mountains = self.mountainsController.filteredMountains(with: filter).sorted { $0.name < $1.name }
+
+    var snapshot = NSDiffableDataSourceSnapshot<Section, MountainsController.Mountain>()
+    snapshot.appendSections([.main])
+    snapshot.appendItems(mountains)
+    dataSource.apply(snapshot, animatingDifferences: true)
+}
+```
+
+Snapshot은 Swift의 generic 클래스이기 때문에, SectionIdentifierType과 ItemIdentifierType을 파라미터로 전달해줘야 한다. 여기서는 Section을 보면 단일하면서 딱히 쓸모가 없다. 이럴 때 자주 사용할 수 있는 기술은 이를 위한 enum 타입을 하나 생성하는 것이다. 그래서 SectionIdentifierType을 보면 enum으로 정의되어 있다. 그리고 Swift에서 enum이 유용한 점 하나는 자동으로 hashable이라는 것이다.
+
+![image](https://user-images.githubusercontent.com/41438361/150049576-13842c3f-13b2-4fda-8fab-f3a28b5dc702.png)
+
+MountainType은 MountainsController(model layer)에서 확인할 수 있다. 여기에서는 Mountain들을 struct로 구성했다. 그리고 이 struct type을 hashable하게 만들어 단순히 identifier를 전달하는 것이 아니라 그 자체를 DiffableDataSource에 전달할 수 있게 했다. 여기에서 중요한 것은 각 산들이 hash 값으로 각각 유일하게 정의가 되어야 한다는 것이다.
+
+![image](https://user-images.githubusercontent.com/41438361/150050756-f2a3c473-19bc-4cca-b0b4-80fc3214986e.png)
+
+다시 MountainsViewController로 돌아와서, `configureDataSource`라는 메서드를 보면 data source를 구성하고 있다. 우리는 이 예제에서 UICollectionView를 사용하고 있기 때문에 `UICollectionViewDiffableDataSource`를 초기화했고, 우리의 section과 item 타입으로 파라미터를 전달해줬다. 그리고 diffableDataSource에 연결하고 싶은 collectionview를 전달한다. 마지막으로 끝의 클로저부분에서 `cellForItemAt IndexPath` 메서드를 구현할 때 작성했던 코드들을 작성한다. 우리는 collectionView에 callback을 하고 적절한 타입의 cell을 요청한다. 그리고 cell을 생성한 다음 리턴해준다. 여기에서 달라진 것은 우리가 요청한 IndexPath가 주어지는 것에 추가로 identifier가 주어진다는 것이다. 
+
+```swift
+func configureDataSource() {
+        
+    let cellRegistration = UICollectionView.CellRegistration
+    <LabelCell, MountainsController.Mountain> { (cell, indexPath, mountain) in
+        // Populate the cell with our item description.
+        cell.label.text = mountain.name
+    }
+
+    dataSource = UICollectionViewDiffableDataSource<Section, MountainsController.Mountain>(collectionView: mountainsCollectionView) {
+        (collectionView: UICollectionView, indexPath: IndexPath, identifier: MountainsController.Mountain) -> UICollectionViewCell? in
+        // Return the cell.
+        return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: identifier)
+    }
+}
+```
+
+또 다른 예제를 보자. 이번에는 iOS의 Wi-Fi 설정 화면과 비슷한 화면이다. 이게 이전 예제보다 좀 더 복잡한 이유는 두 개의 섹션이 있기 때문이다. 첫 번째 섹션은 Config 섹션으로, 와이파이를 끄고 켤 수 있다. 그리고 그 밑에는 우리가 연결할 수 있는 와이파이 목록을 동적으로 보여주는 섹션이 있다. 그리고 만약 와이파이 끄기 버튼을 토글시킨다면 UI가 애니메이션으로 사라지거나 나타나는 걸 볼 수 있고, 이것은 모두 DiffableDataSource로 할 수 있다. 이 동적 UI가 어떻게 구현되어 있는지 볼 것이다.
+
+![wifi1](https://user-images.githubusercontent.com/41438361/150053134-18220669-0781-405d-b34d-1481ed48d84e.gif)
+
+WifiSettingsViewController를 보면 `updateUI`라는 메서드가 있다. 그리고 이 메서드는 우리가 출력하고 싶은 것에 변화가 있을 때마다 호출되도록
+했다. 거의 항상 현재 사용 가능한 네트워크가 달라지기 때문에 이와 같이 만들었다. 이 말고도 사용자가 와이파이 켜기/끄기 버튼을 토글할 때도 변화가 일어날 수 있다. 언제건 간에 UI를 변화시켜야 할 때마다 이 메서드가 호출될 것이다. 그리고 여기서도 마찬가지로 위에서 언급한 세 단계를 거친다. 우리가 출력하고 싶은 데이터를 받은 다음, 스냅샷을 생성하고 스냅샷은 처음에 비어있기 때문에 데이터로 이를 구성할 것이다. 먼저 첫번째 섹션인 config 섹션을 추가하고, 아이템을 추가한다. 그래서 여기에는 와이파이가 켜져있는지 꺼져있는지에 따라 하나 혹은 두 개의 아이템이 있을 수 있다. 와이파이가 켜지면 우리의 model layer에서 현재 사용가능한 네트워크 리스트를 받는다. 그리고 이 리스트를 특정 타입의 아이템으로 감쌀 건데, 이는 뒤에서 볼 것이다. 
+네트워크 리스트를 위한 섹션을 추가하고, 아이템들을 추가한다. 여기에서 우리가 두 개의 다른 섹션을 가지고 작업하고 있기 때문에, 우리가 어떤 섹션에 아이템을 추가하는지를 명시할 수 있다. 이제 DiffableDataSource에 이 변화들을 적용해달라고 요청한다. 이때 애니메이션을 적용하지 않고 싶을 때도 있기 때문에 이런 사항은 옵션으로 넘겨주면 되겠다.
+
+```swift
+func updateUI(animated: Bool = true) {
+    guard let controller = self.wifiController else { return }
+
+    let configItems = configurationItems.filter { !($0.type == .currentNetwork && !controller.wifiEnabled) }
+
+    currentSnapshot = NSDiffableDataSourceSnapshot<Section, Item>()
+
+    currentSnapshot.appendSections([.config])
+    currentSnapshot.appendItems(configItems, toSection: .config)
+
+    if controller.wifiEnabled {
+        let sortedNetworks = controller.availableNetworks.sorted { $0.name < $1.name }
+        let networkItems = sortedNetworks.map { Item(network: $0) }
+        currentSnapshot.appendSections([.networks])
+        currentSnapshot.appendItems(networkItems, toSection: .networks)
+    }
+
+    self.dataSource.apply(currentSnapshot, animatingDifferences: animated)
+}
+```
+
+그리고 위 코드에서 `Secion`과 `Item` 타입을 보자. section은 enum 타입이고, 두 개의 섹션이 필요하니 케이스를 두 개 만든다. 위에서도 잠깐 언급했는데 enum type은 Swfit에서 hashable 하기 때문에 이를 바로 사용할 수 있다. Item 타입은 산 예제에서 봤던 것과 같이 struct type이고, 이것이 hashable을 따르도록 구현한다. 그리고 여기에서 Item type을 정의한 이유는 우리의 리스트를 보면 대부분 네트워크 목록을 포함하고 있다. 하지만 맨 처음 아이템을 보면 와아피아 켜기/끄기 스위치가 있는데 이는 네트워크 아이템이 아니다. 그래서 여기서 단일 리스트를 가지고 있다. 그리고 각 아이템들을 이 generic wrapper type으로 감싼다. 하지만 이 wrapper type이 우리가 DiffableDataSource에 넘겨줄 타입이기 때문에 이게 hashable을 따르게 하고 아이템들이 hash 값에 의해 유일하게 정의되어야 함을 보장해줘야 한다.
+
+![image](https://user-images.githubusercontent.com/41438361/150055361-003ab94e-31db-45fb-b53d-8e17275e3371.png)
+![image](https://user-images.githubusercontent.com/41438361/150055526-04a379b8-07a3-4690-8e26-533b99d37e8c.png)
+
+이제 data source를 구성하는 부분을 볼 것이다. 이전에 했던 것과 비슷한데, 여기에서는 UITableView로 작업을 한다. 하지만 snapshot을 생성하는 관점에서 보면 API가 굉장히 비슷하기 때문에 신경쓰지 않아도 된다. `UITableViewDiffalbeDataSource`를 초기화하는데, 우리가 사용할 섹션과 아이템 타입들을 인자로 넘겨준다. 그리고 같이 사용할 table view를 넘겨준다. 마지막으로 item provider closure를 구현한다. 확실히 이전 산 예제에 비해서 복잡한데, 이는 우리가 다양한 타입의 아이템들을 갖고 있기 때문이다. 세 개의 아이템 타입이 있기 때문에 이를 다르게 다뤄주고 있다. 하지만 이 코드는 DiffableDataSource를 사용하고 있지 않아도 작성해야 할 코드다. `cellForItem IndexPath` 메서드에 있을 코드다. 
+
+```swift
+func configureDataSource() {
+    wifiController = WiFiController { [weak self] (controller: WiFiController) in
+        guard let self = self else { return }
+        self.updateUI()
+    }
+
+    self.dataSource = UITableViewDiffableDataSource
+        <Section, Item>(tableView: tableView) { [weak self]
+            (tableView: UITableView, indexPath: IndexPath, item: Item) -> UITableViewCell? in
+        guard let self = self, let wifiController = self.wifiController else { return nil }
+
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: WiFiSettingsViewController.reuseIdentifier,
+            for: indexPath)
+
+        var content = cell.defaultContentConfiguration()
+        // network cell
+        if item.isNetwork {
+            content.text = item.title
+            cell.accessoryType = .detailDisclosureButton
+            cell.accessoryView = nil
+
+        // configuration cells
+        } else if item.isConfig {
+            content.text = item.title
+            if item.type == .wifiEnabled {
+                let enableWifiSwitch = UISwitch()
+                enableWifiSwitch.isOn = wifiController.wifiEnabled
+                enableWifiSwitch.addTarget(self, action: #selector(self.toggleWifi(_:)), for: .touchUpInside)
+                cell.accessoryView = enableWifiSwitch
+            } else {
+                cell.accessoryView = nil
+                cell.accessoryType = .detailDisclosureButton
+            }
+        } else {
+            fatalError("Unknown item type!")
+        }
+        cell.contentConfiguration = content
+        return cell
+    }
+    self.dataSource.defaultRowAnimation = .fade
+
+    wifiController.scanForNetworks = true
+}
+```
+
+마지막 예제는 흥미로운 예제인데, 다른 예제들과 update를 생성하고 commit하는 방법에 있어서 약간의 차이가 있다. 이 예제는 정렬 과정을 각 단계마다 볼 수 있는 예제이다. 이를 위해서 단계를 거쳐 진행되는 메서드가 있고, 한 단계마다의 결과를 받을 수 있게 했다. 얘는 연속적인 새로운 상태를 제공하고, 우리는 이게 제공될때마다 snapshot을 생성하고 적용한다. 
+
+![colorsort](https://user-images.githubusercontent.com/41438361/150058347-e3a80a63-ee8b-47bc-8b2d-9692cdd7941e.gif
+
+InsertionSortViewController를 보면 `performSortStep` 메서드가 있다. 앞에서도 계속 말했듯이, 세 단계 사이클이 있다. 스냅샷을 생성하고, 채우고, 적용한다. 하지만 이 예제에서 새로운, 비어있는 스냅샷을 생성하지 않고 DiffableDataSource에게 현재의 Snapshot을 요청할 것이다. 이제 Snapshot은 현재 UICollectionView에 보여지는 현재의 truth로 미리 채워져 있다. 우리는 이 상태에서 다음 단계를 연산해주면 된다. 코드를 보면 Snapshot을 채울 때 예전에 사용했던 `appendItems` 메서드를 볼 수 있다. 추가로 `deleteItems` 함수도 볼 수 있다. 그리고 Snapshot API를 보면 존재하는 스냅샷을 수정하기 위한 다양한 함수들이 존재한다.
+
+![image](https://user-images.githubusercontent.com/41438361/150073480-797ca5f3-17e1-4f89-a1f7-ff5414592c36.png)
+
+하지만 다른 측면에서 이 코드에서 하고 있는 작업은 위의 다른 예제들에서 했던 것과 매우 비슷하다. 우리가 출력하고 싶은 최종 상태를 만들고 있는 것이다. 
+
+
+```swift
+func performSortStep() {
+    if !isSorting {
+        return
+    }
+
+    var sectionCountNeedingSort = 0
+
+    // Get the current state of the UI from the data source.
+    var updatedSnapshot = dataSource.snapshot()
+
+    // For each section, if needed, step through and perform the next sorting step.
+    updatedSnapshot.sectionIdentifiers.forEach {
+        let section = $0
+        if !section.isSorted {
+
+            // Step the sort algorithm.
+            section.sortNext()
+            let items = section.values
+
+            // Replace the items for this section with the newly sorted items.
+            updatedSnapshot.deleteItems(items)
+            updatedSnapshot.appendItems(items, toSection: section)
+
+            sectionCountNeedingSort += 1
+        }
+    }
+
+    var shouldReset = false
+    var delay = 125
+    if sectionCountNeedingSort > 0 {
+        dataSource.apply(updatedSnapshot)
+    } else {
+        delay = 1000
+        shouldReset = true
+    }
+    let bounds = insertionCollectionView.bounds
+    DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) {
+        if shouldReset {
+            let snapshot = self.randomizedSnapshot(for: bounds)
+            self.dataSource.apply(snapshot, animatingDifferences: false)
+        }
+        self.performSortStep()
+    }
+}
+```
+
+그리고 DiffableDataSource를 설정하는 코드는 아래와 같다. 
+
+```swift
+func configureDataSource() {
+        
+    let cellRegistration = UICollectionView.CellRegistration
+    <UICollectionViewCell, InsertionSortArray.SortNode> { (cell, indexPath, sortNode) in
+        // Populate the cell with our item description.
+        cell.backgroundColor = sortNode.color
+    }
+
+    dataSource = UICollectionViewDiffableDataSource<InsertionSortArray, InsertionSortArray.SortNode>(collectionView: insertionCollectionView) {
+        (collectionView: UICollectionView, indexPath: IndexPath, node: InsertionSortArray.SortNode) -> UICollectionViewCell? in
+        // Return the cell.
+        return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: node)
+    }
+
+    let bounds = insertionCollectionView.bounds
+    let snapshot = randomizedSnapshot(for: bounds)
+    dataSource.apply(snapshot)
+}
+```
+
+### 4. Considerations
+
+위의 예제들에서 봤듯이 세 단계로 DiffableDataSource를 사용할 수 있다. 
+
+1. Snapshot 생성
+2. Snapshot 채우기
+3. Apply
+
+그래서 이제 `performBatchUpdates` 대신 `apply` 메서드를 호출하고 있다. 
+
+스냅샷을 생성하는 데는 두 가지 방법이 있었다. 가장 일반적인 방법은 빈 스냅샷을 만들고, Snapshot을 섹션과 아이템으로 채운다. 또한 현재 상태에서 스냅샷을 생성할 수도 있다. 이는 수정사항이 작을 때 유용하다. 스냅샷을 생성하면 truth의 복사본을 얻는 거라 이를 수정할 수 있는데 이런 수정은 data source에 영향을 주지 않는다. 
+
+스냅샷을 생성하면 아이템이 얼마나 있는지, 섹션이 얼마나 있는지, identifier들에 어떤 것들이 있는지를 API를 통해 확인할 수 있다. API에서 더는 IndexPath를 사용하지 않는다. 그래서 아이템을 추가하고 섹션을 추가하는 과정을 통해 봤던 방식을 사용하면 된다. 이런 작업들을 insert, move, delete를 통해 수행할 수 있다. 
+
+![image](https://user-images.githubusercontent.com/41438361/150075831-f14f0cdd-73b9-4de9-8ccc-457d89e90668.png)
+
 
 * 참고
 * https://developer.apple.com/videos/play/wwdc2019/220/?time=2097
