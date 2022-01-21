@@ -13,6 +13,8 @@ header-img:
 
 ---
 
+빌드 시간을 줄여야 하는 이유가 무엇인지, 어떤 부분에서 빌드 시간이 증가하는지, 빌드 시간을 분석할 수 있는 방법들에 대해 여러 글들을 정리하면서 알아봤다.
+
 # 빌드 시간을 단축해야 하는 이유? (Keep the Build Fast)
 
 빌드 시간을 단축해야 하는 이유는 무엇일까? 단순히 빌드에 소요되는 시간을 단축해서 작업 속도를 빠르게 하기 위함이기도 하지만, 더 자세하고 구체적인 이유들이 있다.
@@ -105,6 +107,14 @@ if let leftView = leftView {
 return CGSizeMake(size.width + padding, bounds.height)
 ```
 
+Swift3에서는 아래와 같다.
+
+```swift
+// Build time Swift 2.2: 5238.3ms
+// Build time Swift 3.0: 2922.5ms
+return CGSize(width: size.width + (rightView?.bounds.width ?? 0) + (leftView?.bounds.width ?? 0) + 22, height: bounds.height)
+```
+
 ## ArrayOfStuf + [Stuff]
 
 ```swift
@@ -132,6 +142,15 @@ labelNames = Array(systemNames[0..<count])
 labelNames.append(systemNames.last!)
 ```
 
+Swift3에서는 아래와 같다.
+
+```swift
+// See my previous post for the detailed example
+// Build time Swift 2.2: 1250.3ms
+// Build time Swift 3.0: 92.7ms 🎉
+ArrayOfStuff + [Stuff]
+```
+
 ## Ternary operator
 
 3중 연산자를 if/else 문으로 변경하니 92.9% 빌드 시간이 감소했다. 
@@ -148,6 +167,14 @@ if type == 0 {
 } else {
     labelNames = (0...2).map{type1ToString($0)}
 }
+```
+
+Swift 3에서는 아래와 같다.
+
+```swift
+// Build time Swift 2.2: 365.6ms
+// Build time Swift 3.0: 128.4ms
+let labelNames = type == 0 ? (1...5).map(type0ToString) : (0...2).map(type1ToString)
 ```
 
 ## CGFloat를 CGFloat으로 캐스팅하기
@@ -197,19 +224,162 @@ class CMExpandingTextField: UITextField {
 }
 ```
 
+위에서 소개한 플러그인으로 정의도리 수 있는 느린 빌드의 요인에는 두 가지 타입이 있다. 첫 번째는 개인 루틴이 컴파일 하는데 너무 오래 걸리는 것이다. 다른 하나는 클로져와 lazy 프로퍼티들이 타입 체킹이 너무 많이 될 때이다. 
+
+## Closures and lazy properties
+
+위의 플러그인에 Occurrences라는 열이 추가되었는데, 이게 추가된 이유는 단순한 코드가 빌드를 늦출 때가 있다는 것을 쉽게 파악할 수 있기 때문이다.
+
+![image](https://user-images.githubusercontent.com/41438361/150450008-65b0b309-7dbd-44fe-b3d0-89dc4a69d71c.png)
+
+위에서 볼 수 있듯이, lazy getter들이 Xcode 빌드 로그에 159번 실행되고 있다. 아래의 코드는 3개의 별개 파일에서 가져온 것으로, 무엇도 코드에서 CMGridView를 참조하고 있지 않다.
+
+```
+5.7ms  /CMGridView.swift:63:27 @objc get {}
+16.5ms /CMGridView.swift:63:27 @objc get {}
+15.5ms /CMGridView.swift:63:27 @objc get {}
+```
+
+이걸 보면 컴파일러는 타겟에 있는 모든 .swift 파일마다 lazy 변수에 대한 타입 체킹을 하고 있는 것이다! 이는 Swift 2.2에서는 1905ms 정도 빌드 시간을 늘리는데 Swift 3.0에서 이슈는 여전하지만 빌드 시간은 거의 반 정도 준다.
+
+또 다른 예제를 보자.
+
+```swift
+private(set) lazy var chartViewColors: [UIColor] = [
+    self.chartColor,
+    UIColor(red: 86/255, green: 84/255, blue: 124/255, alpha: 1),
+    UIColor(red: 80/255, green: 88/255, blue: 92/255, alpha: 1),
+    UIColor(red: 126/255, green: 191/255, blue: 189/255, alpha: 1),
+    UIColor(red: 161/255, green: 77/255, blue: 63/255, alpha: 1),
+    UIColor(red: 235/255, green: 185/255, blue: 120/255, alpha: 1),
+    UIColor(red: 100/255, green: 126/255, blue: 159/255, alpha: 1),
+    UIColor(red: 160/255, green: 209/255, blue: 109/255, alpha: 1),
+    self.backgroundGradientView.upperColor
+]
+```
+
+이를 컴파일하는데 2초가 걸리는데 이게 오래 걸린다고 생각할 수 있지만, 클로저를 사용하면 더 심해진다.
+
+![image](https://user-images.githubusercontent.com/41438361/150451688-a8e91413-3a73-4fc7-b3ed-7dc908fbf590.png)
+
+클로저를 사용하면 아래와 같은 코드가 된다.
+
+```swift
+private let createChartViewColors = { () -> [UIColor] in
+    let colors = [
+        UIColor(red: 86/255, green: 84/255, blue: 124/255, alpha: 1),
+        UIColor(red: 80/255, green: 88/255, blue: 92/255, alpha: 1),
+        UIColor(red: 126/255, green: 191/255, blue: 189/255, alpha: 1),
+        UIColor(red: 161/255, green: 77/255, blue: 63/255, alpha: 1),
+        UIColor(red: 235/255, green: 185/255, blue: 120/255, alpha: 1),
+        UIColor(red: 100/255, green: 126/255, blue: 159/255, alpha: 1),
+        UIColor(red: 160/255, green: 209/255, blue: 109/255, alpha: 1),
+    ]
+    return colors
+}
+```
+
+## Workaround
+
+이를 개선하려면 코드를 가능하면 private 메서드로 옮기면 된다.
+
+```swift
+// Cumulative build time: 56.3ms
+private(set) lazy var chartViewColors: [UIColor] = self.createChartViewColors()
+
+// Build time: 6.2ms
+private func createChartViewColors() -> [UIColor] {
+    return [
+        chartColor,
+        UIColor(red: 86/255, green: 84/255, blue: 124/255, alpha: 1),
+        UIColor(red: 80/255, green: 88/255, blue: 92/255, alpha: 1),
+        UIColor(red: 126/255, green: 191/255, blue: 189/255, alpha: 1),
+        UIColor(red: 161/255, green: 77/255, blue: 63/255, alpha: 1),
+        UIColor(red: 235/255, green: 185/255, blue: 120/255, alpha: 1),
+        UIColor(red: 100/255, green: 126/255, blue: 159/255, alpha: 1),
+        UIColor(red: 160/255, green: 209/255, blue: 109/255, alpha: 1),
+        backgroundGradientView.upperColor
+    ]
+}
+```
+
+위와 같이 코드를 분리하면 빌드 시간은 96.7% 감소된다.
+
+## Swift 3.0에서의 빌드 시간
+
+Xcode 8.0에서, Xcode의 플러그인 시대가 끝나고 extension의 시대가 시작됐다. Extension에 한계가 있기 때문에 위의 plug in을 별개의 다른 앱으로 작업중이라고 한다. 
 
 # BuildTimeAnalyzer-for-Xcode
 
 Github에 [BuildTimeAnalyzer=for-Xcode](https://github.com/RobertGummesson/BuildTimeAnalyzer-for-Xcode)라는 프로젝트가 있다.
 
-가장 최신 release가 2019년에 나온 릴리즈라 지금 사용하기에는 구버전일 수 있다.
+가장 최신 release가 2019년에 나온 릴리즈라 지금 사용하기에는 구버전일 수 있다. 
 
+## 1. 프로젝트 다운로드 받아 프로젝트 열기
 
+![image](https://user-images.githubusercontent.com/41438361/150465864-cc5e0795-1aad-4f7d-87e5-380a2af6fbc9.png)
 
+프로젝트를 다운받아 실행시켰다.
 
+## 2. Product > Archive
+
+Xcode 메뉴에서 Product > Archive를 클릭한다.
+
+![image](https://user-images.githubusercontent.com/41438361/150465967-c4bd1788-2308-4f10-8716-1960d38c92c6.png)
+
+그러면 아래와 같이 Archives 창이 뜨면서 BuildTimeAnalzyer를 확인할 수 있다. 나는 두 번 Archive해서 두 개가 있는데, 처음 archive를 했다면 BuildTimeAnalzyer가 하나만 있을 것이다.
+
+참고로 archive는 단어에서부터 알 수 있듯이 지금까지의 패키지(.app과 관련된 다른 파일)를 모아둔 것이다. 앱 배포에 필요한 안드로이드의 .apk와 비슷한 .IPA 파일을 생성하는 것은 아니지만 .app(AppStore에 올리는데 필요한 symbol과 다른 정보들)을 포함한 디렉토리(.xcarchive)를 생성한다. 이 .xcarchive는 .ipa를 생성하는 시작점으로 사용된다.
+
+## 3. Distribute App
+
+오른쪽의 Distribute App 버튼을 누르고 원하는 저장위치에 저장한다. 그러면 아래와 같이 폴더와 함께 안에 BuildTimeAnalyzer앱이 있는 걸 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150466212-79d2f31e-e40d-4c31-95d4-d06cad3d76e3.png)
+
+![image](https://user-images.githubusercontent.com/41438361/150466244-a2510962-7255-4c06-9f6b-ec3e2a8c8595.png)
+
+## 4. 앱 실행시키기
+
+![image](https://user-images.githubusercontent.com/41438361/150466334-acdfe472-b8be-46eb-9531-eb0f081616b6.png)
+
+앱을 실행시키면 위와 같이 instruction이 뜬다. 빌드 시간을 분석하고 싶은 프로젝트에서 instruction에 나온대로 하고, 프로젝트를 선택하는 부분에서 해당 프로젝트를 선택하면 아래와 같이 빌드 시간을 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150466507-af4bbe8b-88c8-4c4f-ba54-039277ce1325.png)
+
+# Analyzing and Improving Build times in iOS
+
+이 부분에서는 
+
+1. XCLogParser로 XCode Project의 빌드 시간을 분석하는 방법
+2. Sitrep으로 Swift 코드를 분석하는 법
+3. 어떻게 iOS 프로젝트 디버그 빌드 시간을 40%로 줄일 수 있었는지
+4. 어떻게 Swift 컴파일러 버그가 릴리즈 빌드를 50분 정도 잡아먹는지, 어떻게 해결했는지
+
+## Debug-Mode
+
+### Sitrep for some stats
+
+앱의 크기와 관련된 걸 알고 싶다면 [Sitrep](https://github.com/twostraws/Sitrep)을 사용해서 분석치를 볼 수 있다. Sitrep은 Swift Project 코드 상태에 대한 빠른 통찰을 준다. 이를 사용해서 각 모듈, 앱, Pods의 코드 줄 수를 세는데 사용할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150471717-b49f6dee-b56d-4448-a29d-a38a00d44072.png)
+
+Sitrep을 통해 아래의 내용을 확인할 수 있다.
+
+* Class, struct, enum, protocol, extension의 개수
+* 전체 코드 줄 수, 소스 라인 줄 수(주석과 공백을 뺀 것)
+* 어떤 파일과 타입이 가장 긴지, 또 그들의 코드 줄 수
+* 사용하는 import와 얼마나 자주 import 하는지
+* UIView, UIViewController, SwiftUI 가 얼마나 있는지 등등
+
+### Using Cocoapods
+
+Cocoapod는 소스 코드를 확인하고 앱 프로젝트에 일부를 이를 알려줌으로써 의존성을 관리한다. 우리가 앱을 컴파일 할때마다 dependencies code도 컴파일된다. 그래서 프로젝트는 프레임워크 하나를 빌드할때마다 빌드 시간이 오래 걸린다. 
+
+아래 이미지는 
 
 
 * 참고
 * https://www.martinfowler.com/articles/continuousIntegration.html
 * http://nangpuni.net/?p=957
-* 
+* https://medium.com/@leandromperez/analyzing-and-improving-build-times-in-ios-5e2b77ef408e
