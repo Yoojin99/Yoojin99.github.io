@@ -376,8 +376,55 @@ Sitrep을 통해 아래의 내용을 확인할 수 있다.
 
 Cocoapod는 소스 코드를 확인하고 앱 프로젝트에 일부를 이를 알려줌으로써 의존성을 관리한다. 우리가 앱을 컴파일 할때마다 dependencies code도 컴파일된다. 그래서 프로젝트는 프레임워크 하나를 빌드할때마다 빌드 시간이 오래 걸린다. 
 
-아래 이미지는 
+아래 이미지는 빌드 리포트의 분석의 일부를 보여주는 걸로, XCLogParser로 생성한 것이다.
 
+![image](https://user-images.githubusercontent.com/41438361/150639663-8d51e8a8-0c45-4308-b8d6-ec9b59dbd645.png)
+
+이를 어떻게 개선할 수 있을까? 프로젝트를 컴파일 할 때마다 변하지 않은 프레임워크들에 대해서도 컴파일하는 걸 피할 수 있는 방법이 있을까?
+
+방법 하나는 외부 dependencies를 한 번만 컴파일하고 미리 컴파일된 프레임워크(dynamic libraries)를 사용하는 것이다.
+
+### Using Carthage(카르타고) and Pre-Compiled Frameworks
+
+Carthage로 우리는 dependencies를 특정하고 앱 타겟 빌드 프로세스와 별개로 한 번만 컴파일할 수 있다. Dependencies가 컴파일 되면, 앱 타겟은 이걸 사용해서 빌드하고, 링크하고, 실행한다.
+
+이 컴파일은 `carthage bootstrap`나 `carthage update`를 실행하면 발생한다. 이 도구는 `xcodebuild`로 프레임워크 별로 타겟을 컴파일하고 결과로 `.framework` object들을 얻게 된다. 
+
+그래서 앱 타겟은 소스 코드 대신에 미리 컴파일된 프레임워크를 참조하게 된다. 우리가 clean build를 할 때, Xcode는 외부 dependencies들을 컴파일 하는 걸 피하고 앱 소스 코드만을 컴파일 한다. 이는 많은 시간을 아끼게 해준다.
+
+Carthage에 의해 관리된 미리 컴파일된 프레임워크를 사용해서 같은 앱을 빌드한 시간을 확인해보자. 40% 감소된 것을 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150640053-bd286195-1974-423a-a8ef-841aa3fab108.png)
+
+이렇게 향상된 이유는 바로 컴파일 할 코드의 양이 줄었기 때문이아! Pods는 앱 코드의 44.4%를 차지하고 있었다. 대부분의 dependencies들을 Carthage로 옮기니 Pods 는 11.5%로 감소했다.
+
+![image](https://user-images.githubusercontent.com/41438361/150640120-d5a6945d-0ce9-45aa-ab02-860eb3c39636.png)
+
+이는 컴파일 할 코드의 양이 37% 감소했음을 의미한다. 전체 줄 수가 1879990줄에서 118037줄로 감소했다.
+
+### 이후의 개선점들
+
+**Pre-Compiled Modules**
+
+앱의 아키텍처는 modular 아키텍처로, 메인 타겟의 일부로써 컴파일되는 모든 모듈에 의존하고 있다. 더 큰 규모의 프로젝트를 위한 개선점은 이런 모듈들을 Carthage dependecies로 다루는 것이 될 것이다. 이는 미리 각 모듈마다 미리 컴파일하는 것을 요구할 것이지만 메인 타겟을 컴파일링 할 때는 시간을 절약해줄 것이다. 이 접근법은 다른 모듈들의 소스 코드 내의 변화를 다루는 git submodule 들을 사용해서 구현될 수 있다.
+
+**Static Frameworks**
+
+다른 개선점은 static framework들을 사용하는 것이 될 것이다. 이것이 컴파일 시간을 향상시키지는 않더라도 이론적으로는 앱의 launch time을 향상시킨다.
+
+**SPM maybe**
+
+아직 SPM을 시도해보지 않았지만, 같은 걸 Swift Package Manager로 할 수 있고 아마도 프로젝트를 구성하는 데 더 적은 단계를 거치게 되지 않을까? 
+
+**Migrating from Cocoapods to Carthage**
+
+Cocoapods에서 Carthage로 옮기는 작업은 단순했지만 많은 시도와 에러와 테스팅을 거쳐서 오래 걸렸다. Carthage가 Xcode, 빌드 단계, 프로젝트 설정 등에 대한 지식을 요구하는 것은 맞다. 하지만 그닥 어렵지 않아 시도해 볼만 하다.
+
+예를 들어 각 모듈의 Framework search path와 메인 타겟이 `Carthage/IOS/Build` 폴더를 포함한다는 것, 또 Link Binary with Libraries 빌드 단계에 프레임워크를 포함시켜야 하고 문서에 나온대로 Carthage 스크립트를 적절히 만들어야 하는 것도 중요한다.
+
+Firebase stack과 같은 어떤 의존성들은 Carthage를 사용해서 통합하기에 까다롭다. 이런 경우는 Carthage와 Cocoapods를 함께 사용하는 방법을 사용할 수 있다. 
+
+sdfsdfs
 
 * 참고
 * https://www.martinfowler.com/articles/continuousIntegration.html
