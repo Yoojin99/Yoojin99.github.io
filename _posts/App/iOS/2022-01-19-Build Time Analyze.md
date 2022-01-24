@@ -424,7 +424,7 @@ Cocoapods에서 Carthage로 옮기는 작업은 단순했지만 많은 시도와
 
 Firebase stack과 같은 어떤 의존성들은 Carthage를 사용해서 통합하기에 까다롭다. 이런 경우는 Carthage와 Cocoapods를 함께 사용하는 방법을 사용할 수 있다. 
 
-sdfsdfs
+
 
 * 참고
 * https://www.martinfowler.com/articles/continuousIntegration.html
