@@ -1082,6 +1082,28 @@ let maxValue 		= max(size.width, size.height)
 
 ![image](https://user-images.githubusercontent.com/41438361/150742400-78aedd09-8712-4f01-b9de-cbd9b42d1896.png)
 
+## CocoaPods vs Carthage
+
+요약하면 클린 빌드를 자주 수행하고 빌드 시간을 신경쓴다면 Carthage가 더 좋은 선택이다.
+
+### CocoaPods drawback
+
+CocoaPods는 third-party의 소스코드가 대부분 클린 빌드를 수행할 때마다 컴파일되기 때문에 더 긴 컴파일 시간을 초래한다. 일반적으로 이렇게 할 필요는 없지만 실제로 그렇게 되는 것이다.
+
+### Carthage advantage
+
+클린 빌드에 다시 빌드하지 않기 때문에 매번 dependency를 빌드하지 않아도 된다. 오직 dependency 리스트에 변화가 있을 때에만(새로운 프레임워크를 추가하거나, 프레임워크를 새 버전으로 업데이트 하거나) 외부 dependency들을 빌드하게 된다. 
+
+## Build Time Analyzer
+
+### 1. Build with Timing Summary
+
+내장된 빌드 시간 요약은 컴파일 시간 요약에 대해 대략적으로 알 수 있게 해준다.
+
+![image](https://user-images.githubusercontent.com/41438361/150743300-48093b14-a6ed-456a-b209-a943c79c422c.png)
+
+![image](https://user-images.githubusercontent.com/41438361/150743317-75530a73-b115-4d6d-b7b2-c3c57c122c34.png)
+
 
 # 빌드 관련 툴
 
