@@ -307,45 +307,7 @@ private func createChartViewColors() -> [UIColor] {
 
 ## Swift 3.0에서의 빌드 시간
 
-Xcode 8.0에서, Xcode의 플러그인 시대가 끝나고 extension의 시대가 시작됐다. Extension에 한계가 있기 때문에 위의 plug in을 별개의 다른 앱으로 작업중이라고 한다. 
-
-# BuildTimeAnalyzer-for-Xcode
-
-Github에 [BuildTimeAnalyzer=for-Xcode](https://github.com/RobertGummesson/BuildTimeAnalyzer-for-Xcode)라는 프로젝트가 있다.
-
-가장 최신 release가 2019년에 나온 릴리즈라 지금 사용하기에는 구버전일 수 있다. 
-
-## 1. 프로젝트 다운로드 받아 프로젝트 열기
-
-![image](https://user-images.githubusercontent.com/41438361/150465864-cc5e0795-1aad-4f7d-87e5-380a2af6fbc9.png)
-
-프로젝트를 다운받아 실행시켰다.
-
-## 2. Product > Archive
-
-Xcode 메뉴에서 Product > Archive를 클릭한다.
-
-![image](https://user-images.githubusercontent.com/41438361/150465967-c4bd1788-2308-4f10-8716-1960d38c92c6.png)
-
-그러면 아래와 같이 Archives 창이 뜨면서 BuildTimeAnalzyer를 확인할 수 있다. 나는 두 번 Archive해서 두 개가 있는데, 처음 archive를 했다면 BuildTimeAnalzyer가 하나만 있을 것이다.
-
-참고로 archive는 단어에서부터 알 수 있듯이 지금까지의 패키지(.app과 관련된 다른 파일)를 모아둔 것이다. 앱 배포에 필요한 안드로이드의 .apk와 비슷한 .IPA 파일을 생성하는 것은 아니지만 .app(AppStore에 올리는데 필요한 symbol과 다른 정보들)을 포함한 디렉토리(.xcarchive)를 생성한다. 이 .xcarchive는 .ipa를 생성하는 시작점으로 사용된다.
-
-## 3. Distribute App
-
-오른쪽의 Distribute App 버튼을 누르고 원하는 저장위치에 저장한다. 그러면 아래와 같이 폴더와 함께 안에 BuildTimeAnalyzer앱이 있는 걸 확인할 수 있다.
-
-![image](https://user-images.githubusercontent.com/41438361/150466212-79d2f31e-e40d-4c31-95d4-d06cad3d76e3.png)
-
-![image](https://user-images.githubusercontent.com/41438361/150466244-a2510962-7255-4c06-9f6b-ec3e2a8c8595.png)
-
-## 4. 앱 실행시키기
-
-![image](https://user-images.githubusercontent.com/41438361/150466334-acdfe472-b8be-46eb-9531-eb0f081616b6.png)
-
-앱을 실행시키면 위와 같이 instruction이 뜬다. 빌드 시간을 분석하고 싶은 프로젝트에서 instruction에 나온대로 하고, 프로젝트를 선택하는 부분에서 해당 프로젝트를 선택하면 아래와 같이 빌드 시간을 확인할 수 있다.
-
-![image](https://user-images.githubusercontent.com/41438361/150466507-af4bbe8b-88c8-4c4f-ba54-039277ce1325.png)
+Xcode 8.0에서, Xcode의 플러그인 시대가 끝나고 extension의 시대가 시작됐다. Extension에 한계가 있기 때문에 위의 plug in이 별도의 앱으로 만들어졌으니 깃헙에서 확인하면 될 것 같다.
 
 # Analyzing and Improving Build times in iOS
 
@@ -461,9 +423,759 @@ Bitrise의 한 멋진 기능은 workflow를 실행하고 원격으로 가상 거
 * 미리 빌드된 프레임워크는 컴파일 시간을 더 빠르게 하고 이를 위해 최적화하는 데 Carthage는 Cocoapod의 좋은 대체제다.
 * 마지막으로, 최적화의 여부는 컴파일하는데 별 차이가 없다. 위의 예시들에서 컴파일러는 코드를 최적화하는 도중 복잡한 Swift 문장에서 멈췄었다. 이는 컴파일러 내의 버그로 인해 발생했을 수 있다. 
 
+# How To Boost Xcode's Compile Time and Runtime
+
+## Project Settings
+
+### 1. New Build System을 사용해라
+
+File > Menu > Workspace Settings(Workspace를 사용하고 있지 않다면 Project Settings) 에서 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150730651-b7ef7bef-c099-4032-9e0e-facdde9c4a1f.png)
+
+### 2. 활성화된 아키텍처만 빌드하기
+
+프로젝트 빌드 설정에서 "Build Active Architecture Only" 로 이동한다. "Debug"를 "Yes"로, "Release"를 "No"로 설정한다.
+
+![image](https://user-images.githubusercontent.com/41438361/150730923-3734c5d2-d7c2-4d80-8a3c-da9d70e5f959.png)
+
+### 3. dSYM 파일 생성 최적화하기
+
+"Debug Information Format"을 릴리즈 빌드에서 dSYM 파일을 항상 생성하는 것으로 설정한다. 디버그 빌드에서는 필요하지 않을 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150731135-33899db6-57d7-45ba-9b09-ad66eeff4de1.png)
+
+
+### 최적화 레벨
+
+"Debug"를 "-Onone"으로 설정하고, "Release"를 "-O"나 "-Osize"로 설정한다.
+
+![image](https://user-images.githubusercontent.com/41438361/150734553-9c0c86fd-4877-43fd-a3f5-6240eee85fb2.png)
+
+CocoaPods에서는 아래를 Podfile의 끝에 추가해서 모든 dependencies를 최적화한다.
+
+```rb
+post_install do |installer|
+ installer.pods_project.targets.each do |target|
+   target.build_configurations.each do |config|
+     if config.name == 'Debug'
+       config.build_settings['OTHER_SWIFT_FLAGS'] = ['$(inherited)', '-Onone']
+       config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-O'
+     end
+   end
+ end
+end
+```
+
+### 컴파일 모드
+
+"Debug"를 "Incremental"로, "Release"를 "Whole Module"로 설정한다.
+
+![image](https://user-images.githubusercontent.com/41438361/150734831-e95cd106-e435-4bfd-b891-97d5a9e80628.png)
+
+CocoaPods에서는 아래를 Podfile의 끝에 추가해서 모든 dependencies를 최적화한다.
+
+```rb
+post_install do |installer|
+ installer.pods_project.targets.each do |target|
+   target.build_configurations.each do |config|
+     if config.name == 'Debug'
+       config.build_settings['SWIFT_COMPILATION_MODE'] = 'singlefile'
+     else
+       config.build_settings['SWIFT_COMPILATION_MODE'] = 'wholemodule'
+     end
+   end
+ end
+end
+```
+
+### 필요할 떄만 런 스크립트를 실행한다.
+
+아래의 스크립트는 빌드 설정과 무관하게 항상 실행된다.
+
+![image](https://user-images.githubusercontent.com/41438361/150735191-99f37f98-207a-4314-9c69-6fde32b33f4f.png)
+
+이는 Debug 설정일때만 실행되면 되니 이를 디버그 빌드에서만 실행되게 바꿀 수 있다.
+
+```rb
+if [ "${CONFIGURATION}" = "Debug" ]; then
+ "${PODS_ROOT}/SwiftLint/swiftlint"
+else
+ echo "Not running SwiftLint/swiftlint because we are building for Release"
+fi
+```
+
+반대로 릴리즈 빌드에서만 실행되게 하려는 실행 스크립트가 있다면 아래와 같이 하면 된다.
+
+```rb
+if [ "${CONFIGURATION}" = "Release" ]; then
+  "${PODS_ROOT}/FirebaseCrashlytics/run"
+else
+  echo "Not running FirebaseCrashlytics/run because we are building for debug"
+fi
+```
+
+## Xcode Setting
+
+### 1. 컴파일 시간을 재기
+
+아래의 커맨드를 터미널에 입력한다.
+
+```
+defaults write com.apple.dt.Xcode ShowBuildOperationDuration YES
+```
+
+Xcode를 닫고 다시 열고 프로젝트를 빌드하면 컴파일 성공 메세지 끝에 컴파일 시간을 볼 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150735751-5e265b46-f6c6-4e59-ae27-185c6e6d6b9a.png)
+
+### 2. 컴파일 하는데 오래 걸리는 코드를 보기
+
+프로젝트 설정의 "Other Swift Flags" 에 아래의 줄을 추가한다.
+
+```
+-Xfrontend -warn-long-function-bodies=100
+-Xfrontend -warn-long-expression-type-checking=30
+```
+
+`100`, `30`은 밀리세컨이다.
+
+![image](https://user-images.githubusercontent.com/41438361/150736138-bfda6eb8-1ad2-4dbc-9f91-30f9a4cb05a3.png)
+
+이제 프로젝트에서 컴파일 하는데 오래 걸리는 코드가 무엇인지 확인할 수 있다. 이제 이런 영역을 확인해서 다시 작성할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150736263-1a9929de-2fea-4542-bb4a-f3096697f29e.png)
+
+가장 정확한 컴파일 시간을 알고 싶다면 Clean build를 하고 derived data를 삭제하면 알 수 있다.
+
+### 3. 함수들의 컴파일 시간 확인하기
+
+"Other Swift Flag"에 아래의 줄을 추가한다.
+
+```
+-Xfrontend -debug-time-function-bodies
+```
+
+이러면 프로젝트에서 각 함수마다 컴파일 시간을 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150736532-8c958e8b-de1d-4cf1-a92d-1d7cc9c3d760.png)
+
+### 4. Xcode에서 병행 빌드 활성화하기(고사양 RAM 필요)
+
+아래의 줄을 커맨드에 친다.
+
+```
+defaults write com.apple.dt.Xcode BuildSystemScheduleInherentlyParallelCommandsExclusively -bool NO
+```
+
+이를 비활성화하려면 아래의 줄을 커맨드에 친다.
+
+```
+defaults delete com.apple.dt.Xcode BuildSystemScheduleInherentlyParallelCommandsExclusively
+```
+
+만약 충분한 메모리가 없다면 속도를 더 늦추게 될 수 있다.
+
+## 코드 최적화
+
+### 1. 재사용
+
+만약 아래의 콛와 같이 여러 곳에서 `isValidEmail`이라는 변수가 있는 `String` extension이 있다고 해보자. 만약 코드의 한 복사본이 컴파일 하는데 50ms 가 걸린다면, 다른 복사본도 컴파일하는데 같은 시간이 걸릴 것이다. 따라서 두 개의 복사본이 있다면 100ms 정도 컴파일하는데 걸릴 것이다.
+
+
+파일 1
+
+```swift
+// Bad: Writing isValidEmail variable twice
+class LoginViewController: UIViewController {
+    //...
+}
+
+fileprivate extension String {
+    var isValidEmail : Bool {
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let predicate = NSPredicate(format: "SELF MATCHES[c] %@", regex)
+        return predicate.evaluate(with: self)
+    }
+}
+```
+
+파일 2
+
+```swift
+// Bad: Writing isValidEmail variable twice
+class SignupViewController: UIViewController {
+    //...
+}
+
+fileprivate extension String {
+    var isValidEmail : Bool {
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let predicate = NSPredicate(format: "SELF MATCHES[c] %@", regex)
+        return predicate.evaluate(with: self)
+    }
+}
+```
+
+우리는 위의 코드를 새로운 extension 파일로 작성하고 두 파일에서 사용이 가능한 코드의 단일한 버전을 만들 수 있다. 버전이 단일하다면 컴파일 하는데 50ms만 걸리 것이다.
+
+파일 1
+
+```swift
+class LoginViewController: UIViewController {
+  //...
+}
+```
+
+파일 2
+
+```swift
+class SignupViewController: UIViewController {
+  //...
+}
+```
+
+파일 3
+
+```swift
+// Good: Seperate extension which can be used multiple times
+extension String {
+    var isValidEmail : Bool {
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let predicate = NSPredicate(format: "SELF MATCHES[c] %@", regex)
+        return predicate.evaluate(with: self)
+    }
+}
+```
+
+또 비슷한 코드를 여러 번 복붙하는 경우가 있는데, 모든 코드는 다르다는 관점에서 컴파일러는 추가적인 불필요한 작업을 하게 된다.
+
+즉 아래와 같이 여러 비슷한 코드가 반복되는 것을 지양해야 한다.
+
+```swift
+// Bad: Doing same kind of things again and again in different functions.
+class SubscriptionViewController {
+
+  @IBAction func getOneMonth(_ sender: UIButton) {
+    tokenInt = 1
+    imgViewOneBg.image = UIImage(named: "Path 6")
+    imgViewThreeMonthBg.image = nil
+    imgViewSixMonthsBg.image = nil
+    imgViewOneYearBg.image = nil
+        
+    imgViewOneBg.layer.borderColor = UIColor.clear.cgColor
+    imgViewThreeMonthBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewSixMonthsBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewOneYearBg.layer.borderColor = UIColor.lightGray.cgColor
+  }
+
+  @IBAction func getThreeMonths(_ sender: UIButton) {
+    tokenInt = 3
+    imgViewOneBg.image = nil
+    imgViewThreeMonthBg.image = UIImage(named: "Path 6")
+    imgViewSixMonthsBg.image = nil
+    imgViewOneYearBg.image = nil
+    
+    imgViewOneBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewThreeMonthBg.layer.borderColor = UIColor.clear.cgColor
+    imgViewSixMonthsBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewOneYearBg.layer.borderColor = UIColor.lightGray.cgColor
+  }
+
+  @IBAction func getSixMonths(_ sender: UIButton) {
+    tokenInt = 6
+    imgViewOneBg.image = nil
+    imgViewThreeMonthBg.image = nil
+    imgViewSixMonthsBg.image = UIImage(named: "Path 6")
+    imgViewOneYearBg.image = nil
+    
+    imgViewOneBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewThreeMonthBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewSixMonthsBg.layer.borderColor = UIColor.clear.cgColor
+    imgViewOneYearBg.layer.borderColor = UIColor.lightGray.cgColor
+  }
+
+  @IBAction func getOneYear(_ sender: UIButton) {
+    tokenInt = 12
+    imgViewOneBg.image = nil
+    imgViewThreeMonthBg.image = nil
+    imgViewSixMonthsBg.image = nil
+    imgViewOneYearBg.image = UIImage(named: "Path 6")
+       
+    imgViewOneBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewThreeMonthBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewSixMonthsBg.layer.borderColor = UIColor.lightGray.cgColor
+    imgViewOneYearBg.layer.borderColor = UIColor.clear.cgColor
+  }  
+}
+```
+
+위와 같은 코드는 논리적인 접근 방법을 사용해서 아래와 같이 최적화할 수 있다. 코드는 로직에 의해 줄어들고, 비슷한 여러 코드를 컴파일 할 때보다 컴파일 하는데 시간이 적게 걸릴 것이다.
+
+```swift
+// Good: Same code rewritten in a better way and less lines to compile faster.
+class SubscriptionViewController {
+
+  @IBAction func optionTapped(_ sender: UIButton) {
+    tokenInt = sender.tag
+
+    let imageViews: [UIImageView] = [imgViewOneBg, imgViewThreeMonthBg, imgViewSixMonthsBg, imgViewOneYearBg]
+
+    for imageView in imageViews {
+        if sender.tag == imageView.tag {
+            imageView.image = UIImage(named: "Path 6")
+            imageView.layer.borderColor = UIColor.clear.cgColor
+        } else {
+            imageView.image = nil
+            imageView.layer.borderColor = UIColor.lightGray.cgColor
+        }
+    }
+}
+```
+
+### 2. 불필요한 공백 지우기
+
+아무것도 하지 않는 코드 또한 컴파일러에 의해 컴파일되기 때문에 이런 코드를 지우는 것은 컴파일 시간을 줄이는데 도움이 된다.
+
+```swift
+// Bad: Having Unnecessary useless code
+final class FilterCell: UITableViewCell {
+
+    @IBOutlet weak var labelTitle: UILabel!
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+    }
+
+    override func setSelected(_ selected: Bool, animated: Bool) {
+        super.setSelected(selected, animated: animated)
+    }
+}
+```
+
+```swift
+// Good: Cleaned version
+final class FilterCell: UITableViewCell {
+
+    @IBOutlet weak var labelTitle: UILabel!
+}
+```
+
+### 3. 가능한 let을 쓴다.
+
+```swift
+// Bad: Using var even we are not modifying it from other place
+class ViewController: UIViewController {
+  public var constantWidth = 100
+  public var constantHeight = 50
+}
+```
+
+```swift
+// Good: Changed var to let because the variable is not going to change.
+final class ViewController: UIViewController {
+  private let constantWidth: CGFloat = 100
+  private let constantHeight: CGFloat = 50
+}
+```
+
+### 4. 가능한 클래스를 final로 만든다.
+
+```swift
+// Bad: No final keyword
+class ViewController: UIViewController {
+}
+```
+
+```swift
+// Good: With final keyword
+final class ViewController: UIViewController {
+}
+```
+
+### 5. 프로젝트에서 public과 open을 사용하는 것을 지양하고 가능한 private을 사용한다.(libraries/frameworks 제외)
+
+```swift
+// Bad: Open class (frameworka/libraries are exceptions)
+open class ViewController: UIViewController {
+  open let constantWidth = 100
+  public let constantHeight = 50
+  var isUpdating: Bool = false
+}
+```
+
+```swift
+// Bad: Public class (frameworka/libraries are exceptions)
+public class ViewController: UIViewController {
+  let constantWidth = 100
+  let constantHeight = 50
+  var isUpdating: Bool = false
+  @IBOutlet var textLabel: UILabel!
+
+  @objc func gestureRecognized() {
+  }
+}
+```
+
+```swift
+// Good: Without open/public (frameworka/libraries are exceptions)
+final class ViewController: UIViewController {
+  private let constantWidth: CGFloat = 100
+  private let constantHeight: CGFloat = 50
+  fileprivate var isUpdating: Bool = false
+  private(set) var isDataAvailable: Bool = false
+  @IBOutlet private var textLabel: UILabel!
+
+  @objc private func gestureRecognized() {
+  }
+}
+```
+
+### 6. 만약 같은 파일에 있다면 가능한 extension들을 private이나 fileprivate로 설정한다.
+
+```swift
+// Bad: Avoid non private extension when they don't use outside of the file.
+final class VideoRecorder {
+}
+
+extension VideoRecorder {
+
+  func capturePhoto() {
+  }
+  
+  func startRecording() {
+  }
+  
+  func stopRecording() {
+  }
+}
+```
+
+```swift
+// Good: A good example to make the extension private.
+final class VideoRecorder {
+}
+
+private extension VideoRecorder {
+
+  func capturePhoto() {
+  }
+  
+  func startRecording() {
+  }
+  
+  func stopRecording() {
+  }
+}
+```
+
+### 7. 타입을 명확히 표시한다.
+
+컴파일러가 추론하게 하지 말자. 만약 타입을 명시하지 않으면 컴파일러는 시간을 들여 타입을 찾아야 한다. 타입을 명시해서 컴파일러가 작업 하는 시간을 줄이는 것이 좋다.
+
+```swift
+// Bad: Avoid the automatic type infer. It's an extra overhead for the compiler to determine the variable type
+public class ViewController: UIViewController {
+  let constantWidth = 100
+  var isUpdating = false
+  var isDataAvailable = false
+  var userNames = [“Amit”, “Yogesh”, “Rohit”]
+  var numbers = [1, 2, 3]
+  var savedPaymentMethods = [SavedPaymentMethod]()
+}
+```
+
+```swift
+// Good: Always specify type of the variable to reduce compiler type infer work.
+final class ViewController: UIViewController {
+  private let constantWidth: CGFloat = 100
+  fileprivate var isUpdating: Bool = false
+  private(set) var isDataAvailable: Bool = false
+  private var userNames: [String] = [“Amit”, “Yogesh”, “Rohit”]
+  var numbers: [Int] = [1, 2, 3]
+  private var savedPaymentMethods: [SavedPaymentMethod] = []
+}
+```
+
+타입을 명시하지 않고 `.init`을 쓰는 것도 지양하자. 
+
+```swift
+// Bad: Avoid .init because it's an extra overhead for the compiler to determine the type when compiling
+button.transform 	= .init(scaleX: 1.5, y: 1.5)
+button.contentEdgeInsets = .init(top: 11, left: 32, bottom: 11, right: 32)
+tableView.contentSize 	 = .init(width: 100, height: 500)
+```
+
+```swift
+// Good: Using the Type init version
+button.transform 	= CGAffineTransform(scaleX: 1.5, y: 1.5)
+button.contentEdgeInsets = UIEdgeInsets(top: 11, left: 32, bottom: 11, right: 32)
+tableView.contentSize 	 = CGSize(width: 100, height: 500)
+```
+
+또한 shorthand enum을 쓰는 것도 지양한다.
+
+```swift
+// Avoid shorthand if that particular line takes significant time to compile.
+let action = UIAlertAction(title: "title", style: .default, handler: nil)
+```
+
+```swift
+// Using full version of the UIAlertAction
+let action = UIAlertAction(title: "title", style: UIAlertAction.Style.default, handler: nil)
+```
+
+### 8. Objective-C 타입을 지양
+
+```swift
+// Bad: Using Objective-C types in Swift
+public class ViewController: UIViewController {
+    var dictionary = Dictionary<String, Any>()
+    var nsDictionary = NSMutableDictionary()
+    var array = Array<String: Any>()
+    var nsArray = NSMutableArray()
+    var anyObject: AnyObject?
+}
+```
+
+```swift
+// Good: Using native Swift types
+final class ViewController: UIViewController {
+    private var dictionary: [String: Any] = [:]
+    private var array: [String] = []
+    var any: Any?
+}
+```
+
+### 9. 한 줄에 긴 연산을 쓰는 것 지양
+
+만약 한 줄에 여러 연산이 있다면, 컴팡일러가 어떤 일이 발생하는 지 파악하기가 힘들다. 만약 코드를 여러 개의 간단한 문장으로 분리한다면 컴파일러가 이런 문장들을 정의하는데 도움이 될 것이고 컴파일 하는데도 시간이 더 적게 걸린다.
+
+```swift
+// Bad: Long calculation in single line
+let widthHeight = max(min(min(self.bounds.width - 60, self.bounds.height - 100), 100), 45)
+```
+
+```swift
+// Good: Rewritten in multiple lines
+let proposedWidthHeight = min(self.bounds.width - 60, self.bounds.height - 100)
+let allowedMaxWidth = min(proposedWidthHeight, 100)
+let widthHeight = max(allowedMaxWidth, 45)
+```
+
+```swift
+// Bad: Multiple calculation in single line
+func totalSeconds() -> Int {
+    return (hours*60*60) + (minutes * 60) + seconds
+}
+```
+
+```swift
+// Good: Rewritten in multiple lines
+func totalSeconds() -> Int {
+    let totalHours: Int = hours*3600
+    let totalMinutes: Int = minutes * 60
+    return totalHours + totalMinutes + seconds
+}
+```
+
+### 10. ?? 연산자를 사용해 nil 판단하는 것을 지양
+
+`if-else`을 사용하는 것 대신 `??`를 사용해서 `nil`을 판단하는 것은 컴파일하는 데 더 오랜 시간이 걸리게 한다.
+
+```swift
+// Bad: Doing all the calculations in a single line, which increases the compilation complexity.
+return CGSize(width: size.width + (rightView?.bounds.width ?? 0) + (leftView?.bounds.width ?? 0) + 22, height: bounds.height)
+```
+
+```swift
+// Best: Avoid the ?? operator and rewrite same thing with if let
+var padding: CGFloat = 22
+if let rightView = rightView {
+    padding += rightView.bounds.width
+}
+ 
+if let leftView = leftView {
+    padding += leftView.bounds.width
+}
+ 
+return CGSizeMake(size.width + padding, bounds.height)
+```
+
+```swift
+// Good: Another solution is at least split the complex expression to multiple lines
+let rightPadding: CGFloat = rightView?.bounds.width ?? 0
+let leftPadding: CGFloat = leftView?.bounds.width ?? 0
+return CGSize(width: size.width + rightPadding + leftPadding + 22, height: bounds.height)
+```
+
+### 11. lazy 변수들을 가능한 지양
+
+`lazy` 변수들을 선언하는 것은 `lazy`하지 않는 것에 비해 더 오랜 컴파일 시간이 걸린다.
+
+```swift
+// Bad: Avoid lazy properties. Use it only on necessary situations.
+private lazy var label: UILabel = {
+    let label = UILabel()
+    label.font = UIFont.systemFontOfSize(19)
+    return label
+}()
+```
+
+```swift
+// Good: without lazy, and a seperate configuration function
+private let label = UILabel()
+
+//...
+private func setup() {
+  label.font = UIFont.systemFontOfSize(19)
+}
+```
+
+### 12. 타입 캐스팅과 C 메서드를 지양
+
+컴파일러는 타입 캐스팅하는데 시간이 오래 걸린다. 아래의 문법은 굉장히 간단해보이지만, 컴파일 하는데 오랜 시간이 걸린다.
+
+```swift
+// Using below typecasing functions increased the compilation time for that particular line.
+let expiration 		= TimeInterval(expirationDuration)
+let floatIndexValue 	= CGFloat(index)
+let intWidth 		= Int(frame.size.width)
+let doubleValue 	= Double(theString)
+let participiantSquare  = sqrt(participantCount)
+let ratioFloor  	= floor(ratio)
+let ratioCeil	  	= ceil(ratio)
+let roundValue 		= round(d * 0.66)
+let minValue 		= min(size.width, size.height)
+let maxValue 		= max(size.width, size.height)
+```
+
+## 사용하지 않는 것들 제거하기
+
+사용되지 않는 코드들도 컴파일 되기 때문에 이를 없애는 것이 좋다.
+
+### 1. 사용되지 않는 코드 제거하기
+
+[Periphery app](https://github.com/peripheryapp/periphery)앱은 사용되지 않는 코드를 찾는 도구다. 거의 99% 정확하지만 그렇지 않은 경우도 있는 듯하다. 이를 사용해서 사용되지 않는 코드를 찾고 없애서 불필요한 컴파일러 작업을 없애는 것이 좋다.
+
+![image](https://user-images.githubusercontent.com/41438361/150741851-b5305d6f-b8a2-491e-aece-31bdd618d7c1.png)
+
+![image](https://user-images.githubusercontent.com/41438361/150741866-b71ff47c-abb4-4af4-9647-9be1769cb868.png)
+
+[이 Swift Script](https://github.com/PaulTaykalo/swift-scripts/blob/master/unused.rb) 도 사용되지 않는 코드를 찾을 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150741995-d32a65f8-5ccf-477c-8430-2b80d71f6a8e.png)
+
+
+### 2. 사용되지 않는 asset/icon 삭제하기
+
+에셋을 컴파일하는데도 시간이 걸린다. 불필요한 에셋을 지우는 것도 컴파일 시간을 향상시킬 수 있다. [FengNiao](https://github.com/onevcat/FengNiao)는 에셋에서 사용되지 않은 아이콘들을 찾을 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150742154-ec13e5c9-350d-4c7f-a646-3b22f3959e7b.png)
+
+
+### 3. 사용하지 않는 스토리보드 컨트롤러 삭제하기
+
+스토리보드는 컴파일러 속도를 저하시키는 주요 범인이다. 단일 스토리보드에서 대부분 40-60%의 컴파일 시간을 차지한다.
+
+이 시간을 줄일 수 있는 방법 중 하나는 사용되지 않는 컨트롤러들을 제거하거나 이를 별도의 스토리보드로 옮기고 타겟 멤법십을 해제해서 컴파일 되지 않게 설정하는 것이다.
+
+![image](https://user-images.githubusercontent.com/41438361/150742400-78aedd09-8712-4f01-b9de-cbd9b42d1896.png)
+
+
+# 빌드 관련 툴
+
+앞서서 빌드 시간을 줄여야 하는 이유, 또 줄일 수 있는 여러 방법들을 대략적으로 훑어봤다. 이제 위에서 봤던 툴들을 실제로 설치해서 사용해보며 정리하려 한다.
+
+## BuildTimeAnalyzer-for-Xcode
+
+Github에 [BuildTimeAnalyzer=for-Xcode](https://github.com/RobertGummesson/BuildTimeAnalyzer-for-Xcode)라는 프로젝트가 있다.
+
+가장 최신 release가 2019년에 나온 릴리즈라 지금 사용하기에는 구버전일 수 있다. 
+
+### 1. 프로젝트 다운로드 받아 프로젝트 열기
+
+![image](https://user-images.githubusercontent.com/41438361/150465864-cc5e0795-1aad-4f7d-87e5-380a2af6fbc9.png)
+
+프로젝트를 다운받아 실행시켰다.
+
+### 2. Product > Archive
+
+Xcode 메뉴에서 Product > Archive를 클릭한다.
+
+![image](https://user-images.githubusercontent.com/41438361/150465967-c4bd1788-2308-4f10-8716-1960d38c92c6.png)
+
+그러면 아래와 같이 Archives 창이 뜨면서 BuildTimeAnalzyer를 확인할 수 있다. 나는 두 번 Archive해서 두 개가 있는데, 처음 archive를 했다면 BuildTimeAnalzyer가 하나만 있을 것이다.
+
+참고로 archive는 단어에서부터 알 수 있듯이 지금까지의 패키지(.app과 관련된 다른 파일)를 모아둔 것이다. 앱 배포에 필요한 안드로이드의 .apk와 비슷한 .IPA 파일을 생성하는 것은 아니지만 .app(AppStore에 올리는데 필요한 symbol과 다른 정보들)을 포함한 디렉토리(.xcarchive)를 생성한다. 이 .xcarchive는 .ipa를 생성하는 시작점으로 사용된다.
+
+### 3. Distribute App
+
+오른쪽의 Distribute App 버튼을 누르고 원하는 저장위치에 저장한다. 그러면 아래와 같이 폴더와 함께 안에 BuildTimeAnalyzer앱이 있는 걸 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150466212-79d2f31e-e40d-4c31-95d4-d06cad3d76e3.png)
+
+![image](https://user-images.githubusercontent.com/41438361/150466244-a2510962-7255-4c06-9f6b-ec3e2a8c8595.png)
+
+### 4. 앱 실행시키기
+
+![image](https://user-images.githubusercontent.com/41438361/150466334-acdfe472-b8be-46eb-9531-eb0f081616b6.png)
+
+앱을 실행시키면 위와 같이 instruction이 뜬다. 빌드 시간을 분석하고 싶은 프로젝트에서 instruction에 나온대로 하고, 프로젝트를 선택하는 부분에서 해당 프로젝트를 선택하면 아래와 같이 빌드 시간을 확인할 수 있다.
+
+![image](https://user-images.githubusercontent.com/41438361/150466507-af4bbe8b-88c8-4c4f-ba54-039277ce1325.png)
+
+<kbd>Command</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> 를 눌러 Clean build를 하고 툴로 다시 빌드 시간에 대한 분석을 확인하려고 하면 당연하게도 빌드 로그를 분석할 수 없다. 
+
+* 특징 : 전체 빌드 시간, 함수별로 걸린 컴파일 시간, 컴파일러에서 함수가 얼마나 반복되는지, 또 각 항목을 클릭했을 때 해당 부분으로 이동할 수 있다.
+
+## Sitrep
+
+### 설치
+
+[Github](https://github.com/twostraws/Sitrep)에 여러 경로를 통한 설치 방법이 나와있는데, 나는 커맨드로 해보겠다.
+
+터미널을 열어 아래의 커맨드를 입력했다.
+
+```
+git clone https://github.com/twostraws/Sitrep
+cd Sitrep
+make install
+```
+
+### Command line flags
+
+플래그 없이 커맨드 라인으로 실행시키면, Sitrep은 자동으로 현재의 디렉토리를 스캔해서 찾는 내용들을 텍스트로 출력한다. 이에 옵션을 주려면 커맨드 플래그를 이용하면 된다.
+
+* `-c`는 .sitrep.yml 설정 파일이 있다면 해당 파일의 경로를 내가 명시할 수 있게 해준다.
+* `-f`는 출력 포맷을 설정한다. 예를 들어 `-f json`은 JSON 형식으로 출력하는 걸 가능하게 한다. 디폴트는 텍스트이고, `-f text`와 같다.
+* `-i`는 만약 실제 스캐닝이 요청되었다면 Sitrep이 사용했을 설정들을 보여줘서 디버깅 정보를 출력하게 한다.
+* `-p`는 Sitrep이 스캔할 경로를 설정한다. 디폴트는 현재 위치다.
+* `-h`는 커맨드 라인에 대한 정보를 출력한다.
+
+### Configuration
+
+스캔하고 싶은 디렉토리 안에 .sitrep.yml 파일을 생성해서 Sitrep의 행동을 커스터마이징 할 수 있다. 
+
+예를 들어 .build 디렉토리와 테스트를 제외하고 싶다면 .sitrep.yml 파일을 아래와 같이 생성해야 한다.
+
+```yml
+excluded:
+  - .build
+  - Tests
+```
+
+## XCLogParser
+
+## Carthage
+
+## Periphery
+
+## FengNiao
 
 
 * 참고
 * https://www.martinfowler.com/articles/continuousIntegration.html
 * http://nangpuni.net/?p=957
 * https://medium.com/@leandromperez/analyzing-and-improving-build-times-in-ios-5e2b77ef408e
+* https://betterprogramming.pub/improve-xcode-compile-and-run-time-8b8f812c17f8
