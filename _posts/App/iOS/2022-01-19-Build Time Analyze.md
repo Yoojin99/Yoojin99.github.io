@@ -1232,15 +1232,17 @@ post-scheme build action으로 `xcactivitylog` 파일들을 자동으로 파싱�
 xclogparser parse --project MyApp --reporter html
 ```
 
+
+근데 문제는 Xcode postbuild에 이걸 넣어서 실행시키려면 sclogparser executable이 있어야 한다고 했는데, 여러 문제에 부딪혀서 일단은 터미널에서 수동으로 입력해줬다.
+
 ![image](https://user-images.githubusercontent.com/41438361/150923475-6b00843b-28e5-4dea-82b9-99f87209983e.png)
 
 나는 아래와 같이 이용했다.
 
 ```
-xclogparser parse --project UICollectionViewVIsibleCells --reporter html --output build/reports
+/usr/local/bin/xclogparser parse --project UICollectionViewVIsibleCells --reporter html --rootOutput ~/Desktop/build/reports
+open ~/Desktop/build/reports
 ```
-
-근데 문제는 Xcode postbuild에 이걸 넣어서 실행시키려면 sclogparser executable이 있어야 한다고 했는데, 여러 문제에 부딪혀서 일단은 터미널에서 수동으로 입력해줬다.
 
 그러면 프로젝트 내에 build > reports 라는 폴더가 생기는데 여기에 리포트가 생성된다. index.html을 눌러 확인해주면 된다.
 
