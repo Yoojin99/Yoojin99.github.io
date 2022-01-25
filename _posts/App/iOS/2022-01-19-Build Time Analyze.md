@@ -1155,15 +1155,18 @@ Xcode 메뉴에서 Product > Archive를 클릭한다.
 
 ### 설치
 
-[Github](https://github.com/twostraws/Sitrep)에 여러 경로를 통한 설치 방법이 나와있는데, 나는 커맨드로 해보겠다.
+[Github](https://github.com/twostraws/Sitrep)에 여러 경로를 통한 설치 방법이 나와있는데, 나는 brew로 설치했다.
 
 터미널을 열어 아래의 커맨드를 입력했다.
 
 ```
-git clone https://github.com/twostraws/Sitrep
-cd Sitrep
-make install
+brew install twostraws/brew/sitrep
 ```
+
+설치가 잘 됐다.
+
+![image](https://user-images.githubusercontent.com/41438361/150745844-2af3d8f4-9390-4073-a589-ab37846d8b51.png)
+
 
 ### Command line flags
 
@@ -1187,7 +1190,61 @@ excluded:
   - Tests
 ```
 
+### 사용해보기
+
+나는 위에서 brew로 설치를 받았기 때문에 바로 `sitrep` 커맨드를 쓸 수 있다. 분석 결과를 보고 싶은 프로젝트 홈 디렉토리에서 `sitrep`을 치니 아래와 같이 나왔다.
+
+![image](https://user-images.githubusercontent.com/41438361/150818877-cc43e1ac-60d4-4cc3-a527-a009bb34f4c0.png)
+
+* Overview : 스캔된 파일 수, 구조체, 클래스, 열거형, 프로토콜, extension의 수
+* Sizes : 전체 줄 수, 코드로만 이루어진 줄 수, 가장 긴 파일, 가장 긴 타입. 참고로 Pods 쪽에 있는 것까지 다 스캔하고 있기 떄문에 Pods를 제외하고 싶으면 .sitrep.yml 파일을 만들어 프로젝트 파일에 넣으면 된다.
+* Sturcture : import를 얼마나 했는지, 프로젝트에 있는 ViewController, View의 개수
+
+* 특징 : 시간에 따라 변화하는 프로젝트의 개요를 확인하기에는 좋은 것 같으나 빌드 시간을 줄이기 위한 도구로는 적합하지 않은 것 같다.
+
 ## XCLogParser
+
+[XCLogParser](https://github.com/MobileNativeFoundation/XCLogParser)는 로그 컨텐츠를 분석하기 위해 다양한 종류의 리포트를 생성한다. XCLogParser는 프로젝트에 있는 모듈마다 빌드 시간, 경고, 에러, 그리고 유닛 테스트 결과를 제공한다.
+
+XCLogParser는 3가지 작업을 할 수 있다.
+
+1. `xcactivitylog` 내용을 `JSON` 문서로 변환한다.
+2. `xcactivitylog`의 내용을 다양한 형식의 리포트로 변환한ㄷ.(json, flatjson, summaryJson, chromeTracer, issues, html)
+3. `LogStoreManifest.plist` 파일의 내용을 `JSON` 문서로 변환한다.
+
+XCLogParser를 통해 할 수 있는 일들은 아래와 같다.
+
+* 빌드 시간을 이해하고 자세하게 추적한다.
+* 유닛 테스트 결과, 경고, 에러를 확인한다.
+* Xcode 외부 사용을 위한 다른 개발자 도구를 빌드한다.
+
+### 설치
+
+Homebrew를 이용해서 설치했다.
+
+`$ brew install xclogparser`
+
+### Xcode 통합
+
+post-scheme build action으로 `xcactivitylog` 파일들을 자동으로 파싱할 수 있다. 이 방법으로 빌드가 끝나자마자 가장 마지막의 빌드 로그가 파싱될 것이다. 이를 하려면 프로젝트의 scheme editor를 연다음 왼쪽 패널의 "Build" 부분을 클릭한다. 그러면 "Post-action" run script를 새로 추가할 수 있고 요구되는 파라미터와 함꼐 `xclogparser` 실행파일을 실행시킬 수 있다.
+
+```
+xclogparser parse --project MyApp --reporter html
+```
+
+![image](https://user-images.githubusercontent.com/41438361/150923475-6b00843b-28e5-4dea-82b9-99f87209983e.png)
+
+나는 아래와 같이 이용했다.
+
+```
+xclogparser parse --project UICollectionViewVIsibleCells --reporter html --output build/reports
+```
+
+근데 문제는 Xcode postbuild에 이걸 넣어서 실행시키려면 sclogparser executable이 있어야 한다고 했는데, 여러 문제에 부딪혀서 일단은 터미널에서 수동으로 입력해줬다.
+
+그러면 프로젝트 내에 build > reports 라는 폴더가 생기는데 여기에 리포트가 생성된다. index.html을 눌러 확인해주면 된다.
+
+* 특징 : 빌드 시간, 에러, 경고, 타임라인(타겟별로 걸리는 빌드 시간), 가장 느린 타겟, 가장 컴파일 오래 걸리는 파일 등등을 굉장히 자세히 확인할 수 있다.
 
 ## Carthage
 
