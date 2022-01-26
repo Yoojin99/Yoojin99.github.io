@@ -1250,11 +1250,16 @@ open ~/Desktop/build/reports
 
 ## Carthage
 
+[Carthage](https://github.com/Carthage/Carthage) 는 Cocoa application에 프레임워크를 가장 간단하게 추가하도록 하는 것이 목표다. Carthage는 dependency들을 빌드하고 바이너리 프레임워크를 제공해주지만, 개발자는 프로젝트 구조와 셋업을 모두 통제할 수 있다. Carthage는 자동으로 프로젝트 파일을 수정하거나 빌드 세팅을 건들지 않는다.
+
+
+
 ## Periphery
 
 ![image](https://user-images.githubusercontent.com/41438361/151111796-813bd557-e65e-484d-b8f5-fa3410c54e3f.png)
 
 [Periphery](https://github.com/peripheryapp/periphery)는 Swift 프로젝트에서 사용되지 않는 코드를 찾아내는 도구다.
+Periphery의 목적은 사용되지 않은 declaration들을 찾는 것이다. Declaration에는 class, struct, protocol, function, property, constructor, enum, typealias, associatedtype 등이 있다.
 
 ### Installation
 
@@ -1278,7 +1283,10 @@ periphery scan --setup
 
 ![image](https://user-images.githubusercontent.com/41438361/151112922-9db9cc23-48e9-41ba-886a-4a180cdc2661.png)
 
+
 ## FengNiao
+
+[FengNiao](https://github.com/onevcat/FengNiao)는 Xcode 프로젝트에서 사용되지 않는 이미지 리소스 파일을 삭제하기 위한 커맨드 라이 툴이다.
 
 
 * 참고
