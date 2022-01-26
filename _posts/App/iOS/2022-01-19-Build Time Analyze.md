@@ -1252,6 +1252,32 @@ open ~/Desktop/build/reports
 
 ## Periphery
 
+![image](https://user-images.githubusercontent.com/41438361/151111796-813bd557-e65e-484d-b8f5-fa3410c54e3f.png)
+
+[Periphery](https://github.com/peripheryapp/periphery)는 Swift 프로젝트에서 사용되지 않는 코드를 찾아내는 도구다.
+
+### Installation
+
+Homebrew로 설치했다.
+
+```
+brew install peripheryapp/periphery/periphery
+```
+
+Swift Package Manager로 설치할 수 있는데, 일단 그냥 homebrew로 설치했다.
+
+### How To Use
+
+해당 프로젝트 폴더로 가서 아래의 커맨드를 터미널에 입력한다.
+
+```
+periphery scan --setup
+```
+
+그러면 아래와 같이 몇 개의 질문에 답을 하고 Periphery가 프로젝트를 스캔해서 결과를 보여줄 것이다.
+
+![image](https://user-images.githubusercontent.com/41438361/151112922-9db9cc23-48e9-41ba-886a-4a180cdc2661.png)
+
 ## FengNiao
 
 
