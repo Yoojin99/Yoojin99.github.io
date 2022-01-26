@@ -1104,6 +1104,24 @@ CocoaPods는 third-party의 소스코드가 대부분 클린 빌드를 수행할
 
 ![image](https://user-images.githubusercontent.com/41438361/150743317-75530a73-b115-4d6d-b7b2-c3c57c122c34.png)
 
+# Bazel로 LINE의 iOS 앱 빌드 속도를 2배 빠르게!
+
+의존성 빌드는 크게 두 가지 방법으로 진행할 수 있다.
+
+1. Carthage 를 통해 사전에 빌드된 artifact를 Github에서 다운로드 : 보안상 지양
+2. 로컬에서 빌드 : 앱 성능을 고려해 모든 의존성을 정적 프레임워크로 빌드.
+
+Carthage는 보이지 않는 곳에서 Xcode를 실행시켜 모든 의존성을 [fat 바이너리](https://ko.wikipedia.org/wiki/유니버설_바이너리)로 빌드하는데, 지원하는 모든 아키텍처에 대해 이 과정을 반복한다. Xcode의 아카이브 액션은 자체 설계에 따라 클린 빌드를 하도록 되어 있는데, 이 때문에 빌드에 오랜 시간이 걸렸다. 모든 사람이 동일한 코드를 반복적으로 빌드해야 하면 자원이 많이 낭비되는데, Carthage의 빌드 artifact를 빌드/기기 간 캐싱할 수 있는 방법이 있다.
+
+### 빌드 캐싱 적용
+
+빌드 캐싱에는 오픈 소스 툴인 [Rome](https://github.com/tmspzz/Rome)을 사용할 수 있다. 다만 캐시의 정합성을 검증할 방법이 없었는데, QA 테스트 및 릴리스 빌드가 캐시 포이즈닝(cache poisoning)과 같은 공격에 노출되는 것을 막기 위해 모든 것을 처음부터 재빌드하는 방법도 있다.
+
+### 잔여 이슈
+
+불필요하게 의존성 빌드를 반복하는 것은 피할 수 있었지만, 코드 자체는 빌드해야 한다. 클린 빌드를 하게 되면 거의 바뀌지 않는 빌드 아티팩트가 타깃에서 제거되어 버린다. 목표는 코드의 어느 부분이든 불필요한 재발드는 하지 않는 것으로, 이를 위해 코드 베이스를 모듈로 분리해서 빌드하고 캐싱하는 방법을 적용할 수 있다.
+
+
 
 # 빌드 관련 툴
 
@@ -1294,3 +1312,4 @@ periphery scan --setup
 * http://nangpuni.net/?p=957
 * https://medium.com/@leandromperez/analyzing-and-improving-build-times-in-ios-5e2b77ef408e
 * https://betterprogramming.pub/improve-xcode-compile-and-run-time-8b8f812c17f8
+* https://engineering.linecorp.com/ko/blog/improving-build-performance-line-ios-bazel/
