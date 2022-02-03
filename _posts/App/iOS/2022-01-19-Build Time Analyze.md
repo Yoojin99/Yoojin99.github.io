@@ -115,6 +115,35 @@ Swift3에서는 아래와 같다.
 return CGSize(width: size.width + (rightView?.bounds.width ?? 0) + (leftView?.bounds.width ?? 0) + 22, height: bounds.height)
 ```
 
+Swift5에서는 아래와 같다.
+
+```swift
+// 9131.9ms
+func getCGSize1() -> CGSize {
+    return CGSize(width: 10 + (rightView?.bounds.width ?? 0) + (leftView?.bounds.width ?? 0) + 22, height: view.bounds.height)
+}
+
+// 2.3ms
+func getCGSize2() -> CGSize {
+    var padding: CGFloat = 22
+
+
+    if let rightView = rightView {
+        padding += rightView.bounds.width
+    }
+
+    if let leftView = leftView {
+        padding += leftView.bounds.width
+    }
+
+    return CGSize(width: 10 + padding, height: view.bounds.height)
+}
+```
+
+<img width="615" alt="image" src="https://user-images.githubusercontent.com/41438361/152283152-981f6b6c-ce31-4f27-bbb2-f88dd2f8ad40.png">
+<img width="616" alt="image" src="https://user-images.githubusercontent.com/41438361/152283170-1418b845-4247-43b3-9896-96d1f59d2577.png">
+
+
 ## ArrayOfStuf + [Stuff]
 
 ```swift
@@ -151,6 +180,31 @@ Swift3에서는 아래와 같다.
 ArrayOfStuff + [Stuff]
 ```
 
+Swift5에서는 아래와 같다.
+
+```swift
+func appendArray1() -> [String] {
+    var firstArray = ["A", "B", "C"]
+    let secondArray = ["D", "E", "F"]
+
+    firstArray += secondArray
+
+    return firstArray
+}
+
+func appendArray2() -> [String] {
+    var firstArray = ["A", "B", "C"]
+    let secondArray = ["D", "E", "F"]
+
+    firstArray.append(contentsOf: secondArray)
+
+    return firstArray
+}
+```
+
+<img width="632" alt="image" src="https://user-images.githubusercontent.com/41438361/152283358-4366bac6-4c27-4523-aff3-31bd4fc56e4f.png">
+
+
 ## Ternary operator
 
 3중 연산자를 if/else 문으로 변경하니 92.9% 빌드 시간이 감소했다. 
@@ -177,6 +231,30 @@ Swift 3에서는 아래와 같다.
 let labelNames = type == 0 ? (1...5).map(type0ToString) : (0...2).map(type1ToString)
 ```
 
+Swift5에서는 아래와 같다.
+
+```swift
+// 65.3ms
+func ternaryOperator1(type: Int) {
+    let labelName = type == 0 ? "Zero" : "NonZero"
+}
+
+// 1.5ms
+func ternaryOperator2(type: Int) {
+    var labelName: String
+
+    if type == 0 {
+        labelName = "Zero"
+    } else {
+        labelName = "NonZero"
+    }
+}
+```
+
+<img width="679" alt="image" src="https://user-images.githubusercontent.com/41438361/152292358-ac935c98-6448-4a2b-bbc7-bb970e7fb6cd.png">
+<img width="682" alt="image" src="https://user-images.githubusercontent.com/41438361/152292391-6f6872ff-53e2-422b-9e56-d5eea24e163a.png">
+
+
 ## CGFloat를 CGFloat으로 캐스팅하기
 
 이미 CGFloat인 값들이었고, 몇 괄호들은 불필요했다. 이를 해결하니 빌드 시간이 99.9% 감소했다.
@@ -189,6 +267,30 @@ return CGFloat(M_PI) * (CGFloat((hour + hourDelta + CGFloat(minute + minuteDelta
 return CGFloat(M_PI) * ((hour + hourDelta + (minute + minuteDelta) / 60) * 5 - 15) * unit / 180
 ```
 
+Swift5에서는 아래와 같다.
+
+```swift
+// 131.2ms
+func casting1() -> CGFloat {
+    let float: CGFloat = 32
+
+    return 32 * CGFloat(float)
+
+}
+
+// 0.3ms
+func casting2() -> CGFloat {
+    let float: CGFloat = 32
+
+    return 32 * float
+}
+```
+
+<img width="599" alt="image" src="https://user-images.githubusercontent.com/41438361/152292572-f70b0230-a64a-489f-9fde-3844cc9b706d.png">
+<img width="596" alt="image" src="https://user-images.githubusercontent.com/41438361/152292589-300d18e1-a583-4f5f-8090-302f2a939a55.png">
+
+
+
 ## Round()
 
 이 예시는 좀 이상한데, 아래의 예제들은 local, instance 변수들을 섞은 것이다. 문제는 round 자체가 아니라 메서드 내의 코드의 조합일 가능성이 크다. rounding을 제거하니 97.6% 빨라졌다.
@@ -199,6 +301,24 @@ let expansion = a — b — c + round(d * 0.66) + e
 // Build time: 34.7ms
 let expansion = a — b — c + d * 0.66 + e
 ```
+
+Swift5에서는 아래와 같았다.
+
+```swift
+// 317.4
+func calculateRound1() {
+    let num: Double = 3 + 5 + round(8/3)
+}
+
+// 7.4
+func calculateRound2() {
+    let num: Double = 3 + (8 / 3)
+}
+```
+
+<img width="642" alt="image" src="https://user-images.githubusercontent.com/41438361/152292738-2f69f5b0-d96b-418c-8d06-1831968cb2c0.png">
+<img width="647" alt="image" src="https://user-images.githubusercontent.com/41438361/152292761-d794a77d-16cd-4d78-a819-c7e7e5a56231.png">
+
 
 ## Try it out
 
@@ -304,6 +424,16 @@ private func createChartViewColors() -> [UIColor] {
 ```
 
 위와 같이 코드를 분리하면 빌드 시간은 96.7% 감소된다.
+
+Swift5에서도 확인해보니 아래와 같았다.
+
+* 클로저 사용
+<img width="481" alt="image" src="https://user-images.githubusercontent.com/41438361/152293346-bef22b35-9291-4ed1-a2ae-70aedf0b6346.png">
+* private 함수로 만들었을 때
+<img width="692" alt="image" src="https://user-images.githubusercontent.com/41438361/152293376-a1ef3708-d982-4315-8efa-a934ea2070a3.png">
+* private lazy var getter 사용
+<img width="580" alt="image" src="https://user-images.githubusercontent.com/41438361/152293417-6e953a0f-d7b7-4b45-b841-1e72786134a1.png">
+
 
 ## Swift 3.0에서의 빌드 시간
 
@@ -733,6 +863,11 @@ class SubscriptionViewController {
 }
 ```
 
+실제로 여러 파일에 중복되는 코드가 있을 때 아래와 같이 여러 번 컴파일 일어나는 것을 확인할 수 있다.
+
+<img width="549" alt="image" src="https://user-images.githubusercontent.com/41438361/152294032-7c6bd010-ffa8-402a-b61d-f3ce58e3f2c5.png">
+
+
 ### 2. 불필요한 공백 지우기
 
 아무것도 하지 않는 코드 또한 컴파일러에 의해 컴파일되기 때문에 이런 코드를 지우는 것은 컴파일 시간을 줄이는데 도움이 된다.
@@ -760,6 +895,9 @@ final class FilterCell: UITableViewCell {
     @IBOutlet weak var labelTitle: UILabel!
 }
 ```
+
+<img width="619" alt="image" src="https://user-images.githubusercontent.com/41438361/152294156-4fd600c2-2971-4cf8-9396-8aef472c3ecd.png">
+
 
 ### 3. 가능한 let을 쓴다.
 
@@ -897,6 +1035,11 @@ final class ViewController: UIViewController {
 }
 ```
 
+swift5에서 타입 추론과 관련해 빌드 속도는 많이 개선된 것으로 보인다.
+
+<img width="587" alt="image" src="https://user-images.githubusercontent.com/41438361/152295746-8bd791ee-785f-420b-8b87-467fe0b390ff.png">
+
+
 타입을 명시하지 않고 `.init`을 쓰는 것도 지양하자. 
 
 ```swift
@@ -925,6 +1068,22 @@ let action = UIAlertAction(title: "title", style: .default, handler: nil)
 let action = UIAlertAction(title: "title", style: UIAlertAction.Style.default, handler: nil)
 ```
 
+Swift5에서는 아래와 같다.
+
+```swift
+func setCatType1() {
+    catAddress = .init(location: "location", type: .longHair)
+}
+
+func setCatType2() {
+    catAddress = CatAddress(location: "location", type: CatType.longHair)
+}
+```
+
+<img width="618" alt="image" src="https://user-images.githubusercontent.com/41438361/152295991-e3a8b7d4-0705-4298-a6c3-2a68f8de9202.png">
+<img width="620" alt="image" src="https://user-images.githubusercontent.com/41438361/152296013-f28aeae4-52cc-4994-8999-9ae21c8d43cc.png">
+
+
 ### 8. Objective-C 타입을 지양
 
 ```swift
@@ -946,6 +1105,26 @@ final class ViewController: UIViewController {
     var any: Any?
 }
 ```
+
+Swift5에서 확인해보니 아래와 같았다.
+
+```swift
+private func check1() {
+    var dictionary = Dictionary<String, Any>()
+    var array = Array<String>()
+    var anyObject: AnyObject?
+}
+
+private func check2() {
+    var dictionary: [String: Any] = [:]
+    var array: [String] = []
+    var any: Any?
+}
+```
+
+<img width="589" alt="image" src="https://user-images.githubusercontent.com/41438361/152296572-6914b92b-a77e-4e21-a752-4232c75b6e6c.png">
+<img width="621" alt="image" src="https://user-images.githubusercontent.com/41438361/152296584-ffb36e89-b06c-48f2-a3bd-1f82262f639f.png">
+
 
 ### 9. 한 줄에 긴 연산을 쓰는 것 지양
 
@@ -978,6 +1157,24 @@ func totalSeconds() -> Int {
     return totalHours + totalMinutes + seconds
 }
 ```
+
+Swift5에서도 확연하게 컴파일 시간에서 차이가 났다.
+
+```swift
+private func check1() {
+    let widthHeight = max(min(min(view.bounds.width - 60, view.bounds.height - 100), 100), 45)
+}
+
+private func check2() {
+    let proposedWidthHeight = min(view.bounds.width - 60, view.bounds.height - 100)
+    let allowedMaxWidth = min(proposedWidthHeight, 100)
+    let widthHeight = max(allowedMaxWidth, 45)
+}
+```
+
+<img width="599" alt="image" src="https://user-images.githubusercontent.com/41438361/152297149-f6ba28ca-73b2-40df-bbe3-7c1bf63661ef.png">
+<img width="593" alt="image" src="https://user-images.githubusercontent.com/41438361/152297170-bf3c690d-7bea-4054-895d-b17d1d31ee81.png">
+
 
 ### 10. ?? 연산자를 사용해 nil 판단하는 것을 지양
 
