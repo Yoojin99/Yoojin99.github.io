@@ -41,7 +41,8 @@ label.text = "This is sizeToFit test"
 <img width="290" alt="image" src="https://user-images.githubusercontent.com/41438361/154435903-5a3698d7-42bc-4262-b6ac-092c0a7eb753.png">
 
 그렇다면 `sizeToFit()` 메서드를 사용하면 어떻게 달라질까? 위 코드에서 `sizeToFit()`을 사용했을 때 올바르게 사용하는 방법은 label의 텍스트를 설정한다면 호출하는 것이었다.
-label의 text가 설정되기 전에 `sizeToFit()`을 호출해버리면 라벨의 텍스트가 아예 없는 상태에서 내부의 사이즈에 완전히 맞게 UILabel의 사이즈가 조정되기 때문에 너비 0, 높이 0의 사이즈를 갖게 된다.
+label의 text가 설정되기 전에 `sizeToFit()`을 호출해버리면 라벨의 텍스트가 아예 없는 상태에서 내부의 사이즈에 완전히 맞게 UILabel의 사이즈가 조정되기 때문에 너비 0, 높이 0의 사이즈를 갖게 된다. 즉 sizeToFit은 호출 이후 내부 내용이 변경될때마다 크기가 동적으로 변하는 것이 아니라
+호출 시점에서의 내부 내용에 따라 크기가 설정된다.
 label.text를 설정하고 나서 `sizeToFit()`을 호출하면 아래와 같이 나온다.
 
 <img width="227" alt="image" src="https://user-images.githubusercontent.com/41438361/154436497-44231c6a-6912-4f08-bb45-1f8dc8ca1a3c.png">
