@@ -1,6 +1,6 @@
 ---  
 layout: post  
-title: "[iOS] - Combine 프레임워크"  
+title: "[iOS] - Combine 프레임워크 WWDC 2019 정리"  
 subtitle: ""  
 categories: app
 tags: app-ios combine
@@ -9,7 +9,7 @@ header-img:
 
 ---  
   
-> Combine이 무엇이고, 어떻게 사용하는 건지 알아보자.  
+> WWDC 2019에서 소개된 Combine이 무엇이고, 어떻게 사용하는 건지 알아보자.  
 
 ---
 
@@ -21,8 +21,7 @@ Combine은 프레임워크로, WWDC 2019에서 처음 소개되었다. WWDC 2019
 즉 비동기적인 작업을 단순화한 프레임워크라고 생각하면 될 것 같다. 
 
 이 글에서는 먼저 Combine에 대해 대략적으로 알기 위해 앞 부분에 WWDC 2019의 두 영상을 먼저 정리했다. [Introducing Combine](https://developer.apple.com/videos/play/wwdc2019/722/?time=1098)
-과 [Combine in Practice](https://developer.apple.com/videos/play/wwdc2019/721)로, 첫 번째 영상에서는 Combine의 등장 배경, Combine의
-핵심 개념인 Publisher, Subscriber, Operator에 대해 설명하고 있다. 
+과 [Combine in Practice](https://developer.apple.com/videos/play/wwdc2019/721)로, 첫 번째 영상에서는 Combine의 등장 배경, Combine의 핵심 개념인 Publisher, Subscriber, Operator에 대해 설명하고 있다. 두 번째 영상에서는 더 구체적인 부분과 실제 어떻게 코드로 사용하는지를 보여준다.
 
 # Introducing Combine (WWDC 2019)
 
@@ -668,9 +667,106 @@ subject를 subscribe한 이후의 값만 볼 수 있다. CurrentValue subject는
 
 그래서 서버에 확인하는 asynchronous 한 동작이 있고, 디바이스 내에서 처리 가능한 synchronous한 작업이 있다. 그리고 이 모두를 조합해야 한다. 여기서 Combine을 사용해보자.
 
+### @Published
 
+<img width="1298" alt="image" src="https://user-images.githubusercontent.com/41438361/157418458-4f936d81-ae7d-4fa2-9dc1-c22544c97117.png">
 
+그 전에 하나 알아야 할 것이 있는데, 바로 이 `@Published`다. Published는 Swfit 5.1 피처로 프로퍼티에 Publisher를 추가한다.
 
+간단한 예시로 어떻게 `@Published`를 사용하는 지 보자.
+
+<img width="1790" alt="image" src="https://user-images.githubusercontent.com/41438361/157419038-5441d48b-f148-4a1b-abab-40bb20331a6c.png">
+
+1. 먼저 `@Published` Published property wrapper를 프로퍼티 앞에 추가한다.
+2. `currentPassword`는 "1234"다.
+3. `$password`에서처럼 달러 prefix를 붙여서 wrapped value에 접근한다.
+4. 그리고 `password`를 "password"롤 설정했을 때, subscriber는 이 변화된 값을 받을 것이다.
+5. 그래서 "The published value is 'password'" 가 출력된다.
+
+이제 `@published`를 어떻게 사용하는지 알았으니, 앱에서는 어떻게 사용해야 할 지 보자.
+
+<img width="1023" alt="image" src="https://user-images.githubusercontent.com/41438361/157419992-05dc199a-8e1f-4be6-b158-0fbde8bd7eea.png">
+
+그리고 위에서처럼 비밀번호와 비밀번호 확인란에 입력한 두 값이 같은 때에 확인 절차를 걸쳐야 한다.
+
+<img width="965" alt="image" src="https://user-images.githubusercontent.com/41438361/157420523-53425ece-d244-4df1-81b2-c441e136ddd5.png">
+
+그래서 이 프로퍼티에 Published를 붙여서 두 개의 Publisher를 추가하고, published string은 절대로 fail하는 일이 없다. 그리고 이 두 published 된 것들을 하나의 검증된 비밀번호로 만들고 싶은데, 여기에 CombineLatest operator를 사용할 수 있다. 
+
+<img width="1781" alt="image" src="https://user-images.githubusercontent.com/41438361/157420940-e37e92ff-5f10-4312-9217-33940baba024.png">
+
+위의 코드를 보면 비밀번호와 비밀번호 확인 프로퍼티에 `@Published`를 붙여서 publisher를 추가했다. 그리고 CombineLatest를 사용해서
+달러 prefix와 함께 property wrapper에 접근할 수 있고, 이 둘 중 하나라도 값이 바뀌면 신호를 받을 수 있다. 그리고 클로저를 사용해서 비즈니스
+로직을 구현하는데, 코드를 보면 두 프로퍼티 모두 다 8자 이상임을 검증하고 있다. 그리고 그렇지 않을 경우에는 nil을 리턴해서, 즉 nil을 signal로
+사용해서 작성한 폼이 유효하지 않음을 나타냈다.
+
+그리고 타입을 작성한 코드 부분을 보면 어떤 일이 일어나는지를 쉽게 확인 가능하다. 두 개의 published string을 받고, 이들의 가장 최신의 값들을 
+합쳐서 최종적으로 optional string을 만들었음을 확인할 수 있다.
+
+만약에 "password1"이라는 비밀 번호를 허용하지 않겠다는 새로운 요구사항이 생기면 어떻게 할까?
+
+<img width="1763" alt="image" src="https://user-images.githubusercontent.com/41438361/157423449-e7570503-8bcf-42c9-9d65-ba0f254a989f.png">
+
+위 코드를 보면 map을 추가했다. 타입도 바뀌었는데, 두 개의 published string에서 최신의 값들을 받아 이를 통합하고, optional string으로 매핑했다. 하지만 이걸 API 영역으로 넘기고 이게 다른 Publisher를 구성하게끔 하고 싶다. 
+
+<img width="1775" alt="image" src="https://user-images.githubusercontent.com/41438361/157554957-0463d800-b888-4d7c-93ce-39b9c1ab5fd5.png">
+
+이때 `eraseToAnyPublisher`라는 Operator를 사용해서 AnyPublisher를 리턴하고, optional string과 never를 리턴하게 할 수 있다. 여기서
+타입이 바뀌지는 않았지만 API 영역에 포함시키길 원하는 정확한 부분을 알리고 안의 구현 디테일을 숨길 수 있다.
+
+<img width="764" alt="image" src="https://user-images.githubusercontent.com/41438361/157555626-94ba5a90-b4fd-467f-996e-495a4b6b728f.png">
+<img width="876" alt="image" src="https://user-images.githubusercontent.com/41438361/157555678-37a79cab-056c-4365-a500-651936cae691.png">
+
+그래서 지금까지 한 걸 보면, string 두 개에 각각 Published property wrapper를 사용해서 string Publisher를 추가했다. 그리고 CombineLatest를 사용해서 두 개의 Publisher의 최신 값들을 섞고, 비즈니스 로직을 추가했다. 그리고 map을 사용해서 나쁜 비밀번호를 거르고
+최종적으로는 이 작업들이 API영역에 속하고, 이를 다른 것들과 같이 사용하기 위해 eraseToAnyPublisher를 사용했다.
+
+이제 비밀번호와 비밀번호 확인란을 검증하는 첫 번째 Publisher를 만들었다. 다음으로 넘어가자.
+
+<img width="1397" alt="image" src="https://user-images.githubusercontent.com/41438361/157556082-0bbd99b2-a9d5-4c98-918e-87a5500dac90.png">
+
+이제 사용자가 굉장히 빠르게 타이핑하는 값을 가지고 서버에서 검증해서 사용자 이름이 유효한지를 검증할 것이다. 
+
+<img width="934" alt="image" src="https://user-images.githubusercontent.com/41438361/157556446-34655abd-eef4-4886-befa-c10770045b26.png">
+
+그래서 앞서서 했던 것과 같이 string 프로퍼티에 Published를 추가한다. 그리고 여기에서 좀 특별한 것은 사용자 이름이 유효한지를 검증을 교청하는
+네트워크 연산이 사용자가 하나의 문자를 타이핑할 때마다 일어나지 않게 하는 것이다. 아니면 우리의 서버에 엄청 많은 요청을 보내게 될 것이다. 그래서 신호를
+좀 더 부드럽게 보내야 한다. 이 때 Debounce를 써서 특정 속도보다 빠른 값은 받지 않도록 하는 window를 설정할 수 있게 해준다.
+
+Debounce에 빠른 신호들이 들어왔을 때, 이를 하나의 signal로 완화시킬 수 있다.
+
+<img width="1269" alt="image" src="https://user-images.githubusercontent.com/41438361/157557335-84b4f5b9-a600-47b2-9fd8-2bdc1f00e1a7.png">
+
+추가로, 사용자가 입력한 값이 이전에 입력한 값과 같다면 나중에 입력한 값이 유효한지를 또 검증하기 위해 서버에 요청할 필요가 없다. 예를 들어 사용자가 Merlin을 입력하고, n을 지운다음 다시 n을 입력하면 서버에 다시 요청할 필요가 없다. 여기에 removeDuplicates를 사용할 수 있다. 
+이를 통해 같은 값이 계속해서 해당 window에서 계속 전송되는 것을 막을 수 있다. 
+
+<img width="1401" alt="image" src="https://user-images.githubusercontent.com/41438361/157557624-615bf50e-4aa9-47fa-90fa-079bf16325b6.png">
+
+그래서 코드로 위와 같이 작성한다. Published를 사용자 이름 프로퍼티에 추가하고, debounce를 사용해서 신호를 완화시킨다. 그리고 중복되는 요청을 제거한다. 그런데 아직 비동기 작업은 아무것도 안됐고, 단지 신호만 완화했다. 
+
+<img width="1762" alt="image" src="https://user-images.githubusercontent.com/41438361/157558058-d68b3b53-90a3-4679-91f1-921fb6d9e63f.png">
+
+그래서 이를 위해서 앱에 정의된 서버에 사용자 이름이 유효한지 검증을 요청하는 `usernameAvailable`이라는 메서드를 사용할건데, 이를 Publisher로
+가져올 것이다. FlatMap을 사용하면 stream에서 값을 가져와서 새로운 Publisher를 리턴한다고 했다. FlatMap 안에서 Future라는 걸 호출하고, 이걸
+만들 때 클로저를 제공해야 한다. Promise는 결과(success/failure)를 가지는 클로저라고 생각하면 된다. 그리고 Future 안에서 userNameAvailalbe 함수를 호출하고, 비동기적으로 이게 완료돼서 값을 가져오게 되면 이 경우에 Promise를 success로 채우게 된다. 그리고 값이
+유요하지 않으면 nil을 리턴한다.
+
+<img width="964" alt="image" src="https://user-images.githubusercontent.com/41438361/157558663-2907b9d3-0554-45f1-817e-d8f161a2f4ef.png">
+
+여기에서도 어떤 일이 일어났는지를 보면, 처음에 단순한 Publisher로 시작하고, 신호를 완화하고 중복을 제거했다. 그리고 Future를 사용해서 비동기 네트워크 호출을 하는 API를 감쌌고, flatMap을 사용해서 stream을 두 갈래로 나눴다. 그리고 이것들은 API 영역에 속하기 때문에 eraseToAnyPublisher를 사용했다.
+
+<img width="671" alt="image" src="https://user-images.githubusercontent.com/41438361/157559055-a9646ef2-2056-4c2c-b591-86783022f5ce.png">
+
+그래서 이제 두 개의 Publisher가 생겼고, 이 두 신호(하나는 기기내에서 이루어지고 다른 하나는 비동기 네트워크 호출에 의해 생긴다)를 가지고 앱의 UI를
+활성화하거나 비활성화하는 것이다.
+
+<img width="1776" alt="image" src="https://user-images.githubusercontent.com/41438361/157559248-b24a5907-7b4f-4684-b7dd-8566c738422c.png">
+
+여기에 CombineLatest operator를 사용한다. 두 Publisher를 가지고, 유효하지 않음을 확인하고 optional tuple/nil을 리턴한다.
+
+<img width="1792" alt="image" src="https://user-images.githubusercontent.com/41438361/157559538-1b877379-0dca-4c1c-9c1e-f305d64c0e41.png">
+
+이를 UI에 연결하는 것도 간단하다. 먼저 ViewController의 전체 생명주기에서 subscription을 관리하기 위해 변수를 생성한다. 그리고 map을 사용해
+boolean 값을 버튼의 isEnalbed 프로퍼티에 매핑한다.
 
 * 출처
 * https://developer.apple.com/videos/play/wwdc2019/722/?time=124
