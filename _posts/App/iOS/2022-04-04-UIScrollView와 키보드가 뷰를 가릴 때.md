@@ -149,11 +149,25 @@ content view의 밑에 padding을 줬고, content view에 우리가 위로 올�
 textView가 가려지게 된다. 우리가 여기에서 추가로 해줘야 할 것은 scrollView를 실제로 얼마나 스크롤 할 지 추가로 지정해줘서 textView를 올려야 하는 것이다.
 
 추가로, 키보드가 내려갔을 때 contentInset을 다시 원래대로 설정해야 한다. 먼저 키보드가 내려갔을 때 contentInset을 모두 0으로 만들어주는
-`keyboardWillBeHidden` method를 작성한다.
+`keyboardWillBeHidden` method를 작성한다. 이 메서드는 키보드가 내려갔을 때 UIScrollView의 contentInset을 다시 0으로 만들어서
+원래대로 만든다.
+
+```swift
+@objc private func keyboardWillBeHidden(_ notification: Notification) {
+    scrollView.contentInset = UIEdgeInsets.zero
+}
+```
+
+그리고 이 method를 핸들링할 observer를 등록한다.
 
 ```swift
 NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillBeHidden(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
 ```
+
+그리고 앱을 실행시키면 아래와 같이 나온다. UITextView 안을 클릭하면 키보드가 올라오면서 UIScrollView 하단에 inset이 생기고,
+스크롤 해서 끝까지 내릴 수 있다. 그리고 키보드를 다시 해제하면 inset이 0으로 바뀌면서 스크롤 할 수 없게 된다.
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-04-06 at 08 23 58](https://user-images.githubusercontent.com/41438361/161867108-98d9b870-add0-4f2d-8a63-49b5fb6b78f3.gif)
 
 ## 3. UIScrollView의 contentOffset 조정하기
 
@@ -168,9 +182,29 @@ UIScrollView는 세로로 스크롤 하고 싶을 때 contentOffset.y의 값을 
 
 다시 본론으로 돌아와서 키보드가 올라왔을 때 UITextView를 키보드 위에서 20만큼 떨어진 곳까지 스크롤 하고 싶으면 어떻게 해야 할까?
 
-```swift
+`keyboardWasShown` method에 contentOffset을 설정하는 부분을 작성한다.
 
+```swift
+let textViewTopY = keyboardSize.origin.y
+let textViewBottomY = textView.frame.origin.y + textView.frame.height
+
+# 키보드 위에서 20만큼 떨어진 곳까지 UITextView를 올린다(UIScrollView를 스크롤한다.)
+scrollView.contentOffset.y =  textViewBottomY - textViewTopY + 20
 ```
+
+그리고 앱을 실행시키면 아래와 같이 나온다.
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-04-06 at 08 35 36](https://user-images.githubusercontent.com/41438361/161868006-393a4160-fed4-41f6-ba31-559a66c2042e.gif)
+
+보면 키보드가 올라간 뒤에 스크롤이 돼서 굉장히 부자연스럽다. 이건 notificationCenter에 observer를 등록할 때 아래와 같이 등록했기 때문이다.
+
+```swift
+NotificationCenter.default.addObserver(self, selector: #selector(keyboardWasShown(_:)), name: UIResponder.keyboardDidShowNotification, object: nil)
+```
+
+name에 `UIResponder.keyboardDidShowNotification`을 썼는데, 이건 키보드가 완전히 올라오고 난 뒤에 등록한 selector를 호출하겠다는 의미다. 이 name을 `UIResponder.keyboardWillShowNotification`로 바꾼다. 이러면 키보드가 올라오려고 할 때 selector가 호출된다. 이러고 앱을 실행시키면 아래와 같이 키보드가 올라오면서 contentInset이 조정되는데, 이 편이 더 자연스럽게 보인다.
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-04-06 at 08 39 59](https://user-images.githubusercontent.com/41438361/161868394-f8e4194e-c32f-4bd2-9aab-79f3a956da90.gif)
 
 * 출처
 * https://developer.apple.com/library/archive/documentation/StringsTextFonts/Conceptual/TextAndWebiPhoneOS/KeyboardManagement/KeyboardManagement.html
