@@ -65,7 +65,138 @@ UIStackView는 UIView를 상속한다. 그런데 모든 UIView는 기본적으�
 
 ### Distribution
 
-UIStackView의 Distribution은 열거형이고, **stack view에 배치된 뷰들의 크기와 위치를 정의한다.**
+UIStackView의 Distribution은 열거형이고, **stack view에 배치된 뷰들의 크기와 위치를 정의한다.** 이 distribution은 다섯 가지가 있다.
+
+* fill
+* fillEqually
+* fillProportionally
+* equalSpacing
+* equalCentering
+
+#### fill
+
+Arranged view의 크기를 재조정해서 stack view의 축의 방향으로 arranged view의 크기를 맞게 채운다. 
+
+* arranged view의 크기 < stack view의 높이/너비 : arranged view의 compresseion resistance priority에 따라 뷰의 크기를 줄인다.
+* arranged view의 크기 > stack view의 높이/너비 : arranged view의 hugging priority에 따라 뷰의 크기를 늘린다.
+
+만약 뷰들의 크기를 재조정하는데 constraint나 priority에서 모호함이 있다면 stack view는 `arrangedSubviews` 배열의 뷰들의 순서에 따라 배치된 뷰들의 크기를 재조정한다.
+
+높이 200짜리 stackview에 높이 50짜리 초록색 view를 arranged subview로 추가했다. 높이 50짜리 뷰의 크기가 재조정되어 stack view의 높이 200에 맞게 조정되었다.
+
+![image](https://user-images.githubusercontent.com/41438361/170420736-90ea3625-dfd1-4617-8019-8133c9f96d32.png)
+
+<img width="933" alt="image" src="https://user-images.githubusercontent.com/41438361/170420981-7e873421-7f27-4ed5-94f8-bbd50cfaeb8b.png">
+
+이번에는 높이 50짜리 초록색 뷰 하나와, 높이 50짜리 파란색 뷰 하나를 높이 200짜리 stackView에 차례로 arranged subview로 추가해봤다. 
+
+```swift
+let v1 = createSomeView(color: UIColor.systemGreen)
+let v2 = createSomeView(color: UIColor.systemBlue)
+
+v1.tag = 1
+v2.tag = 2
+
+stackView.addArrangedSubview(v1)
+stackView.addArrangedSubview(v2)
+```
+
+두 뷰를 높이를 합쳐도 stack view의 높이보다 작으니 두 뷰의 hugging priority에 따라 뷰의 크기를 늘릴 것이다. 그런데 따로 hugging priority를 변경하지 않았으므로 두 뷰의 hugging priority는 현재 같은 상태다. 따라서 priority에 모호함이 있는 상태이므로 stack view의 `arrangedSubviews` 배열의 인덱스에 따라 뷰의 크기가 재조정된다.
+
+![image](https://user-images.githubusercontent.com/41438361/170421286-9a4bb81d-f493-4f11-ad9b-f667abf26b57.png)
+
+
+#### fillEqually
+
+fill과 같은데, arranged view들이 같은 크기로 크기가 재조정되는 것이다.
+
+![image](https://user-images.githubusercontent.com/41438361/170432841-067eee9f-ab8c-4fbd-981d-f1574dcc3b9a.png)
+
+#### fillProportionally
+
+subview들이 intrinsic content size에 비율에 따라 크기가 재조정된다.
+
+#### equalSpacing
+
+뷰 간의 공간을 띄워 스택 뷰를 채우는 건데, 뷰 사이사이 공간을 모두 같은 크기로 설정하는 것이다. 주황색이 stack view이고, 초록색, 파란색이 arranged subview로 추가된 뷰다.
+
+<img width="583" alt="image" src="https://user-images.githubusercontent.com/41438361/170433397-d8c0c1c3-4816-4e4b-9a3e-86c8e41370aa.png">
+
+### Stack view positioning, sizing
+
+Stack view가 auto layout을 직접적으로 사용하지 않고서도 컨텐츠를 배치할 수 있게 하지만, stack view를 위치시키기 위해 auto layout을 사용하긴 해야 한다. 일반적으로 stack view의 최소 두 edge를 특정 edge에 고정시켜야 한다는 것이다. 만약 **두 edge 외에 추가적인 constraint를 지정하지 않는다면 시스템에서 stack view의 크기를 컨텐츠에 맞게 조정**한다.
+
+* 스택의 axis 방향 : 축 방향의 크기는 내부에 배치된 뷰들의 크기 + 뷰 사이의 space와 같다.
+* 스택의 axis에 수직인 방향 : 가장 큰 arranged view의 크기와 같다.
+
+만약 stack view읜 `isLayoutMarginsRelativeArrangement` 프로퍼티가 true라면, stack view의 사이즈는 마진을 완전히 채우게 되어있다.
+
+**Stack view는 arranged view의 `intrinsicContentSize` 프로퍼티를 사용해서 스택의 축 방향으로의 크기를 계산한다.** 이게 무슨 말인지 보자.
+
+아래 코드에서는 stack view의 위, 왼쪽 edge를 고정시키고, 내부에 `intrinsicContentSize`가 (100, 50)인 파란색 UIView를 추가했다.
+
+```swift
+class IntrinsicContentSizeView: UIView {
+	let myIntrinsicContentSize: CGSize
+	
+	// intrinsicContentSize를 override 해서 내가 설정한 intrinsicContentSize를 반환한다.
+	override var intrinsicContentSize: CGSize {
+	    myIntrinsicContentSize
+	}
+
+	init(myIntrinsicContentSize: CGSize) {
+	    self.myIntrinsicContentSize = myIntrinsicContentSize
+
+	    super.init(frame: .zero)
+	}
+
+	required init?(coder: NSCoder) {
+	    fatalError("init(coder:) has not been implemented")
+	}
+}
+
+private func setupStackView() {
+	stackView = UIStackView()
+	stackView.translatesAutoresizingMaskIntoConstraints = false
+
+	view.addSubview(stackView)
+
+	stackView.axis = .vertical
+	stackView.backgroundColor = UIColor.systemOrange
+
+	let subview = IntrinsicContentSizeView(myIntrinsicContentSize: CGSize(width: 100, height: 50))
+	subview.backgroundColor = UIColor.systemBlue
+	stackView.addArrangedSubview(subview)
+
+	stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+	stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+}
+```
+
+![image](https://user-images.githubusercontent.com/41438361/170436475-fc03a8a0-f1ab-4519-9396-b53c582c8dd3.png)
+<img width="419" alt="image" src="https://user-images.githubusercontent.com/41438361/170436525-bc82a68c-a1de-4df9-978c-3c10ab4a27b5.png">
+
+보면 stack view의 크기가 내부 설정한 뷰 (100x50)에 맞춰서 설정된 것을 확인할 수 있다. 여기에서 stack view에 layoutMargin을 설정하고 실행하면 아래와 같이 나오는데, 아까와 같다.
+
+```swift
+stackView.layoutMargins = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+```
+
+![image](https://user-images.githubusercontent.com/41438361/170437660-01245002-d259-4942-bb93-52707ccf0903.png)
+
+
+이제 stack view의 `isLayoutMarginsRelativeArrangement` 프로퍼티를 true로 설정하면 아래와 같이 나온다. 
+
+```swift
+stackView.layoutMargins = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+stackView.isLayoutMarginsRelativeArrangement = true
+```
+
+![image](https://user-images.githubusercontent.com/41438361/170437875-f9371288-4781-48c1-b00f-809304a4ff27.png)
+
+마진을 상하좌우로 10씩 줬는데, stack view가 마진을 채워서 크기가 설정된 것을 확인할 수 있다.
+
+
 
 
 # 코드
