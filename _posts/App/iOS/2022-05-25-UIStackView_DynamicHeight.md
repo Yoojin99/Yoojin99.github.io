@@ -201,6 +201,416 @@ Will attempt to recover by breaking constraint
 
 ## Arranged Subview 추가하기
 
+**stack view bottom constraint가 없는 경우**
+
+stackView에 bottom constraint를 주지 않은 상태에서 stack view에 버튼 하나를 만들었다. 버튼을 누르면 스택 뷰에 뷰가 추가되도록 설정했다.
+
+```swift
+private func setupStackView() {
+	stackView = UIStackView()
+	stackView.translatesAutoresizingMaskIntoConstraints = false
+
+	stackView.axis = .vertical
+	stackView.backgroundColor = UIColor.systemGreen
+
+	view.addSubview(stackView)
+
+	let button = createButton()
+	stackView.addArrangedSubview(button)
+
+        stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+	stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+	stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+}
+
+// subview 더하는 버튼
+private func createButton() -> UIButton {
+	let button = UIButton()
+	button.translatesAutoresizingMaskIntoConstraints = false
+
+	button.backgroundColor = UIColor.systemYellow
+	button.setTitle("arranged subview 추가", for: .normal)
+
+	button.addTarget(self, action: #selector(didTapAddButton), for: .touchUpInside)
+
+	button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+
+	return button
+}
+
+// 버튼 터치 시 실행되는 arranged subview 추가 함수
+@objc private func didTapAddButton() {
+	stackView.addArrangedSubview(createSomeView())
+	}
+
+	// 내부에 추가할 뷰
+	private func createSomeView() -> UIView {
+	let view = UIView()
+	view.translatesAutoresizingMaskIntoConstraints = false
+
+	view.backgroundColor = UIColor.systemOrange
+	view.layer.borderColor = UIColor.black.cgColor
+	view.layer.borderWidth = 1
+
+	view.heightAnchor.constraint(equalToConstant: 50).isActive = true
+
+	return view
+}
+```
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-05-26 at 10 57 58](https://user-images.githubusercontent.com/41438361/170399740-36604c17-0983-4222-855c-57dbd89cf365.gif)
+
+실행하면 처음에는 버튼 하나의 크기에 맞는 stackview가 있다. 그리고 버튼을 클릭하면 stack view에 뷰들이 새로 추가된다.
+
+<img width="367" alt="image" src="https://user-images.githubusercontent.com/41438361/170400556-52fc5123-4b07-4964-9c5a-58304b7f4dcd.png">
+
+따로 레이아웃을 업데이트를 시켜주거나 레이아웃 관련 함수를 호출하지 않아도 auto layout이 자동으로 stack view의 크기를 내부 컨텐츠의 크기에 맞춘다.
+
+**stack view bottom constraint가 있는 경우**
+
+stack view의 bottom constraint를 뷰 컨트롤러의 바닥과 일치하게 설정했다.
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-05-26 at 11 07 42](https://user-images.githubusercontent.com/41438361/170400814-680487cc-65d9-4b27-939e-1eb8fb5cfad3.gif)
+
+초기 상태는 위에서도 봤듯이 버튼 하나만 있는데, stack view의 bottom constraint를 설정함으로써 내부 버튼 높이와 stack view를 갖게 만들지 않고 내부 버튼의 높이 constraint가 깨지게 되어 확장된 상태로 시작한다.
+
+그리고 버튼을 계속 누르면 subview들이 계속 추가되고, 버튼이 크기가 줄어드는 것을 확인할 수 있다.
+
+## Arranged Subview 제거하기
+
+```swift
+	private func setupStackView() {
+	stackView = UIStackView()
+	stackView.translatesAutoresizingMaskIntoConstraints = false
+
+	stackView.axis = .vertical
+	stackView.backgroundColor = UIColor.systemGreen
+
+	view.addSubview(stackView)
+
+	let button = createButton()
+	stackView.addArrangedSubview(button)
+
+	// 처음에 10개의 뷰를 추가했다.
+	for _ in 1...10 {
+	    stackView.addArrangedSubview(createSomeView())
+	}
+
+	stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+	stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+	stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+}
+
+// subview 더하는 버튼
+private func createButton() -> UIButton {
+	let button = UIButton()
+	button.translatesAutoresizingMaskIntoConstraints = false
+
+	button.backgroundColor = UIColor.systemYellow
+	button.setTitle("arranged subview 추가", for: .normal)
+
+	button.addTarget(self, action: #selector(didTapRemoveButton), for: .touchUpInside)
+
+	button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+
+	return button
+}
+
+@objc private func didTapRemoveButton() {
+	guard let view = stackView.arrangedSubviews.last else {
+	    return
+	}
+
+	stackView.removeArrangedSubview(view)
+	view.removeFromSuperview()
+}
+
+// 내부에 추가할 뷰
+private func createSomeView() -> UIView {
+	let view = UIView()
+	view.translatesAutoresizingMaskIntoConstraints = false
+
+	view.backgroundColor = UIColor.systemOrange
+	view.layer.borderColor = UIColor.black.cgColor
+	view.layer.borderWidth = 1
+
+	view.heightAnchor.constraint(equalToConstant: 50).isActive = true
+
+	return view
+}
+```
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-05-26 at 12 50 24](https://user-images.githubusercontent.com/41438361/170412307-b014679d-6c42-4db1-b24d-896f34b8f8ee.gif)
+
+삭제하는 것도 별반 다르지 않다. bottom constraint를 지정하지 않으면 자동으로 뷰가 삭제될때마다 내부 컨텐츠에 맞게 stack view의 크기가 맞춰진다.
+
+<img width="498" alt="image" src="https://user-images.githubusercontent.com/41438361/170412488-57581fd5-5569-4d03-897c-87ffabcb4009.png">
+
+bottom constraint가 있으면 위에서도 봤지만 내부에 배치된 뷰의 높이 constraint가 깨지게 된다.
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-05-26 at 12 55 08](https://user-images.githubusercontent.com/41438361/170412762-c65fc5c5-9d1d-4047-94ff-479ec9fd2925.gif)
+
+### removeFromSuperView와 removeArrangedSubview
+
+위 코드에서는 arranged subviews에서 뷰를 제거할 때 `removeArrangedSubview`와 `removeFromSuperview`를 동시에 호출하고 있다. 이 둘을 같이 호출해야 하는 이유는 무엇일까?
+
+사실 `removeFromSuperview`만 하면 충분하다. 공식문서에서는 뷰의 `removeFromSuperview` 메서드를 호출하면 stack view가 해당 뷰를 arrangedSubview 배열에서 제거한다고 했기 때문에, 굳이 `removeArrangedSubview`를 같이 쓰는 것은 불필요하다.
+
+관련된 stackoverflow 글이 있으니 참고하는 것도 좋다.
+
+https://stackoverflow.com/questions/37525706/uistackview-is-it-really-necessary-to-call-both-removefromsuperview-and-remove
+
+## Stack view를 다른 뷰 안에 넣었을 때 확장, 축소하기
+
+stack view를 특정 뷰(컨테이너 뷰라고 부르겠다) 안에 넣는다고 해보자. 뷰의 구성은 아래와 같이 구성할 것이다.
+
+<img width="452" alt="image" src="https://user-images.githubusercontent.com/41438361/170415030-c90f2b15-8ed4-43d1-bf82-1ccdeb9ae6d0.png">
+
+결론부터 얘기해서 스택 뷰에 맞게 컨테이너 뷰의 높이를 조정하려면 
+
+1. 컨테이너 뷰에 bottom constriant를 두지 않는다. (컨테이너 뷰의 높이가 모호한 상태)
+2. 스택 뷰에 bottom constraint를 두지 않는다. (stack view의 높이가 내부 컨텐츠에 맞게 조정)
+3. 스택 뷰의 height constraint가 컨테이너 뷰의 height와 같도록 한다. (내부 컨텐츠에 맞게 조정된 stack view의 높이와 컨테이너 뷰의 높이와 같게 조정함으로써 컨테이너 뷰의 높이를 맞춘다.)
+
+혹은
+
+1. 컨테이너 뷰에 bottom constriant를 두지 않는다. (컨테이너 뷰의 높이가 모호한 상태)
+2. 스택 뷰에 bottom constraint를 컨테이너 뷰의 bottom constraint와 같게 한다. (stack view의 높이는 여전히 동적으로 조절된다. 컨테이너 뷰의 높이가 모호하기 때문에 스택 뷰의 높이를 명시적으로 지정하지 않은 상태이기 때문이다.)
+
+```swift
+private func setupViews() {
+	view.backgroundColor = .white
+	setupContainerView()
+	setupStackView()
+}
+
+// 파란색 컨테이너 뷰 생성
+private func setupContainerView() {
+	containerView = UIView()
+	containerView.translatesAutoresizingMaskIntoConstraints = false
+
+	containerView.backgroundColor = UIColor.systemBlue
+
+	view.addSubview(containerView)
+	
+	// 컨테이너 뷰에 bottom constraint를 두지 않는다.
+	containerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+	containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+	containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+}
+
+// 주황색 스택 뷰 생성
+private func setupStackView() {
+	stackView = UIStackView()
+	stackView.translatesAutoresizingMaskIntoConstraints = false
+
+	containerView.addSubview(stackView)
+
+	stackView.axis = .vertical
+	stackView.backgroundColor = UIColor.systemOrange
+	
+	// 내부에 추가하는 뷰 
+	let view = createSomeView()
+	stackView.addArrangedSubview(view)
+	
+	// stack view에 bottom constraint를 두지 않는다. 외부 컨테이너 뷰의 높이를 스택 뷰의 높이와 같게 설정한다.
+	stackView.topAnchor.constraint(equalTo: containerView.topAnchor).isActive = true
+	stackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor).isActive = true
+	stackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor).isActive = true
+	stackView.heightAnchor.constraint(equalTo: containerView.heightAnchor).isActive = true
+}
+```
+
+<img width="518" alt="image" src="https://user-images.githubusercontent.com/41438361/170416752-568b0dd0-7f7e-4315-b2e7-e9e232e1f45e.png">
+
+### Stack view 높이 동적으로 조정, 변경
+
+위에서 해본 것과 똑같다. 스택 뷰가 컨테이너 뷰에 포함됐느냐 아니냐의 차이만 있을 뿐이다.
+
+```swift
+private func setupViews() {
+	view.backgroundColor = .white
+	setupContainerView()
+	setupStackView()
+}
+
+private func setupContainerView() {
+	containerView = UIView()
+	containerView.translatesAutoresizingMaskIntoConstraints = false
+
+	containerView.backgroundColor = UIColor.systemBlue
+
+	view.addSubview(containerView)
+
+	containerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+	containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+	containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+}
+
+private func setupStackView() {
+	stackView = UIStackView()
+	stackView.translatesAutoresizingMaskIntoConstraints = false
+
+	containerView.addSubview(stackView)
+
+	stackView.axis = .vertical
+	stackView.backgroundColor = UIColor.systemOrange
+
+	let button = createButton()
+	stackView.addArrangedSubview(button)
+
+	for _ in 1...10 {
+	    stackView.addArrangedSubview(createSomeView())
+	}
+
+	stackView.topAnchor.constraint(equalTo: containerView.topAnchor).isActive = true
+	stackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor).isActive = true
+	stackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor).isActive = true
+	stackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor).isActive = true
+}
+
+// subview 더하는 버튼
+private func createButton() -> UIButton {
+	let button = UIButton()
+	button.translatesAutoresizingMaskIntoConstraints = false
+
+	button.backgroundColor = UIColor.systemYellow
+	button.setTitle("arranged subview 삭제", for: .normal)
+
+	button.addTarget(self, action: #selector(didTapRemoveButton), for: .touchUpInside)
+
+	button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+
+	return button
+}
+
+@objc private func didTapRemoveButton() {
+	guard let view = stackView.arrangedSubviews.last else {
+	    return
+	}
+
+	view.removeFromSuperview()
+}
+
+// 내부에 추가할 뷰
+private func createSomeView() -> UIView {
+	let view = UIView()
+	view.translatesAutoresizingMaskIntoConstraints = false
+
+	view.backgroundColor = UIColor.systemRed
+	view.layer.borderColor = UIColor.black.cgColor
+	view.layer.borderWidth = 1
+
+	view.heightAnchor.constraint(equalToConstant: 50).isActive = true
+
+	return view
+}
+```
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-05-26 at 13 48 11](https://user-images.githubusercontent.com/41438361/170418110-fd67ef17-c89a-49d1-be9e-3fdc80bb0132.gif)
+
+<img width="471" alt="image" src="https://user-images.githubusercontent.com/41438361/170418273-ce44ab4b-d676-4caa-8c52-c906d6a4a5ba.png">
+
+아래에 UIViewController의 전체 코드를 첨부한다.
+
+```swift
+import UIKit
+
+class ViewController: UIViewController {
+    
+    private var containerView: UIView!
+    private var stackView: UIStackView!
+    
+    // MARK: - override
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Do any additional setup after loading the view.
+        setupViews()
+    }
+}
+
+// MARK: - setup
+extension ViewController {
+    private func setupViews() {
+        view.backgroundColor = .white
+        setupContainerView()
+        setupStackView()
+    }
+    
+    private func setupContainerView() {
+        containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        
+        containerView.backgroundColor = UIColor.systemBlue
+        
+        view.addSubview(containerView)
+        
+        containerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+    }
+}
+
+// MARK: - private
+extension ViewController {
+    private func setupStackView() {
+        stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        containerView.addSubview(stackView)
+        
+        stackView.axis = .vertical
+        stackView.backgroundColor = UIColor.systemOrange
+        
+        let button = createButton()
+        stackView.addArrangedSubview(button)
+        
+        for _ in 1...10 {
+            stackView.addArrangedSubview(createSomeView())
+        }
+        
+        stackView.topAnchor.constraint(equalTo: containerView.topAnchor).isActive = true
+        stackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor).isActive = true
+        stackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor).isActive = true
+        stackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor).isActive = true
+    }
+    
+    private func createButton() -> UIButton {
+        let button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        button.backgroundColor = UIColor.systemYellow
+        button.setTitle("arranged subview 삭제", for: .normal)
+        
+        button.addTarget(self, action: #selector(didTapRemoveButton), for: .touchUpInside)
+        
+        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        
+        return button
+    }
+    
+    @objc private func didTapRemoveButton() {
+        guard let view = stackView.arrangedSubviews.last else {
+            return
+        }
+
+        view.removeFromSuperview()
+    }
+    
+    private func createSomeView() -> UIView {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        
+        view.backgroundColor = UIColor.systemRed
+        view.layer.borderColor = UIColor.black.cgColor
+        view.layer.borderWidth = 1
+        
+        view.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        
+        return view
+    }
+}
+```
 
 * 참조
 * https://developer.apple.com/documentation/uikit/uistackview
