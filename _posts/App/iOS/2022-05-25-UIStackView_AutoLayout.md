@@ -196,8 +196,137 @@ stackView.isLayoutMarginsRelativeArrangement = true
 
 마진을 상하좌우로 10씩 줬는데, stack view가 마진을 채워서 크기가 설정된 것을 확인할 수 있다.
 
+### Stack view 컨텐츠 동적으로 수정하기
+
+**Stack view는 1. `arrangedSubviews` 배열에 뷰가 추가되거나, 삭제되거나, 삽입될 때, 2. arranged subview 중 하나라도 `isHidden` 프로퍼티가 변경될 때 자동으로 레이아웃을 업데이트한다.**
+
+```swift
+// Appears to remove the first arranged view from the stack.
+// The view is still inside the stack, it's just no longer visible, and no longer contributes to the layout.
+let firstView = stackView.arrangedSubviews[0]
+firstView.isHidden = true
+```
+
+**Stack view의 어떤 프로퍼티라도 변하면 자동으로 이에 반응해서 업데이트한다.**
+
+```swift
+// Toggle between a vertical and horizontal stack
+if stackView.axis == .Horizontal {
+    stackView.axis = .Vertical
+}
+else {
+    stackView.axis = .Horizontal
+}
+```
+
+이런 변화들을 애니메이션 블럭 안에 넣어서 애니메이션으로 보여줄 수도 있다.
+
+```swift
+// Animates removing the first item in the stack.
+UIView.animateWithDuration(0.25) { () -> Void in
+    let firstView = stackView.arrangedSubviews[0]
+    firstView.isHidden = true
+}
+```
+
+근데 좀 웃긴건 `isHidden` 프로퍼티를 toggle 시키면 애니메이션이 좀 웃기게 보인다는 것이다.
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-05-27 at 11 11 18](https://user-images.githubusercontent.com/41438361/170614838-f46494b3-b5e2-46ac-b8c9-8f4acf3af74e.gif)
+
+그런데 arranged subview 가 여러개일 때는 굉장히 매끄럽게 동작했다.
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-05-27 at 11 48 48](https://user-images.githubusercontent.com/41438361/170619010-22253829-137b-4c4d-8f9e-363518078175.gif)
 
 
+이걸 좀 매끄럽게 나타나게 하고 싶어서 `addArrangedSubview`를 `animateWithDuration` 내에서 호출했는데, 애니메이션이 적용되지 않았다. [관련 글](https://stackoverflow.com/questions/32513377/should-i-enclose-addarrangedsubview-to-the-animation-block-or-not)을 찾아보니, **subview를 추가하는 것은 animateWithDuration 함수에서 애니메이션을 적용할 수 없다고 한다.**
+
+그래서 아래와 같이 `arrangedSubview`에 추가할 뷰의 alpha 값을 처음에 0으로 설정하고, 애니메이션 블럭 안에서 alpha 값을 1로 설정해줘서 애니메이션이 매끄럽게 나타나게 하는 방법으로 구현해야 한다고 한다.
+
+```swift
+someSubview.alpha = 0.0
+horizontalStackView.addArrangedSubview(someSubview)
+
+UIView.animateWithDuration(0.25) { () -> Void in
+    someSubview.alpha = 1.0
+}
+```
+
+![Simulator Screen Recording - iPhone 12 Pro Max - 2022-05-27 at 11 40 12](https://user-images.githubusercontent.com/41438361/170617997-2fadd06b-51da-4093-9c42-655d136d3b29.gif)
+
+이건 애니메이션이 매끄럽게 나오기는 하는데 색이 노란색이었다가 파란색으로 바뀌는 듯해서 별로 맘에 들지 않는다.
+
+결론적으로는 `isHidden` 프로퍼티를 toggle하는 방법으로 애니메이션을 설정하는 것이 좋아보인다.
+
+### Intrinsic size & priority
+
+Stack view는 내부에 배치된 뷰들의 크기를 계산할 때 intrinsic content size를 이용한다고 했다. 만약 stack view의 크기에 맞게 내부 뷰들의 크기를 조정해야 하는 경우에서 어떤 뷰의 크기를 조정해야 할 지 결정하기 위해서는 우선순위를 따져야 한다. 이 우선순위를 content hugging priority나 compresseion resistance priority를 통해 설정할 수 있는데, auto layout을 사용할 때 주의해야 할 점이 있다.
+
+[관련 stackOverflow 글](https://stackoverflow.com/questions/62824788/uistackviews-subviews-have-intrinsic-size-yet-still-ignore-content-hugging-pri)
+
+Content Hugging priority는 Constraint 우선순위와 같지 않다. 그리고 constraint는 intrinsic Content size를 결정하지 않는다. Content Huggin priority/Content Compression resistance priority는 intrinsic content size에 기반하고 있다. 그래서 우선순위를 설정할 때 우리가 할 수 있는 방법은 두 가지가 있다.
+
+1. Constraint에 우선순위 부여하기
+2. 뷰에 intrinsic content size를 주고 hugging priority를 설정하기
+
+**첫 번째 방법**
+
+```swift
+let view1 = UIView()
+shelfContentView.addArrangedSubview(view1)
+view1.backgroundColor = .systemRed
+
+let wc1 = view1.widthAnchor.constraint(equalToConstant: 100)
+wc1.isActive = true
+wc1.priority = .defaultHigh
+
+let view2 = UIView()
+shelfContentView.addArrangedSubview(view2)
+view2.backgroundColor = .systemPurple
+
+let wc2 = view2.widthAnchor.constraint(equalToConstant: 100)
+wc2.isActive = true
+wc2.priority = .defaultLow
+
+let view3 = UIView( )
+shelfContentView.addArrangedSubview(view3)
+view3.backgroundColor = .systemBlue
+
+let wc3 = view3.widthAnchor.constraint(equalToConstant: 100)
+wc3.isActive = true
+wc3.priority = .defaultHigh
+```
+
+**두 번째 방법**
+
+```swift
+class IntrinsicView: UIView {
+    var myIntrinsicSize: CGSize = .zero
+    override var intrinsicContentSize: CGSize {
+        return myIntrinsicSize
+    }
+}
+        
+let view1 = IntrinsicView()
+shelfContentView.addArrangedSubview(view1)
+view1.backgroundColor = .systemRed
+
+view1.myIntrinsicSize = CGSize(width: 100, height: 0)
+view1.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+
+let view2 = IntrinsicView()
+shelfContentView.addArrangedSubview(view2)
+view2.backgroundColor = .systemPurple
+
+view2.myIntrinsicSize = CGSize(width: 100, height: 0)
+view2.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+let view3 = IntrinsicView( )
+shelfContentView.addArrangedSubview(view3)
+view3.backgroundColor = .systemBlue
+
+view3.myIntrinsicSize = CGSize(width: 100, height: 0)
+view3.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+```
 
 # 코드
 
@@ -291,14 +420,14 @@ stackView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
 ![image](https://user-images.githubusercontent.com/41438361/170209734-9cb7c62a-ed88-4d05-b5ae-298bcee6bfe9.png)
 
-**Stack view의 arranged subview가 높이 100으로 설정된 constraint를 깨고 stack view를 완전히 채운 것을 볼 수 있다.** 왜 이런 현상이 나타났을까?
+**Stack view의 arranged subview가 높이 100으로 설정된 constraint를 깨고 stack view를 완전히 채운 것을 볼 수 있다.** 위에서 봤듯이, stack view는 auto layout을 사용해서 arranged view들의 크기와 위치를 조정한다. Stack view는 `distribution` 프로퍼티가 `fillEqually`일 때를 제외하고 arranged view들의 크기를 뷰들의 `intrinsicContentSize`를 사용해서 계산한다. 이 상황에서 두 경우로 나눠서 stack view는 동작한다.
 
-* stack view는 내부 배열된 뷰의 크기에 맞게 자신의 크기를 조정한다.
-* 현재 stack view의 constraint는 화면을 꽉 채우게 설정되어 있다.
+* **stack view의 두 edge가 고정된 상태(stack view의 높이나 너비가 모호할 수 있는 상태) : arranged view들의 크기에 맞게 stack view의 크기를 재조정한다.**
+* **stack view에 높이/너비에 대한 constraint가 추가적으로 주어진 상태 : arranged view들을 늘리거나 줄여서 stack view의 크기에 맞춘다.**
 
-=> 내부 배치된 뷰의 크기에 맞추려면 stack view의 높이가 100이 되어야 한다 vs 근데 stack view의 constraint는 화면을 꽉 채우게 되어 있다
+위 두 조건에서 현재는 아래의 상황에 해당한다. stack view의 top, bottom constraint를 설정함으로써 높이에 대한 constraint가 설정된 상태다. 이 상태에서 높이보다 작은 높이를 가진 view가 arranged subview가 추가되었으니 subview의 크기가 stack view의 크기에 맞게 재조정된 것이다.
 
-가 충돌해서 이런 현상이 발생하는 것이다. 위 코드를 실행하면 콘솔에 아래와 같이 나온다.
+콘솔 로그를 보면 더 명확해진다.
 
 ```
 2022-05-25 16:42:45.238151+0900 Test[88134:19339134] [LayoutConstraints] Unable to simultaneously satisfy constraints.
@@ -321,14 +450,9 @@ Will attempt to recover by breaking constraint
 
 로그를 보면 UIView의 height == 100 constraint를 깼다는 걸 확인할 수 있다. 위의 조건이 상충되면서 내부 arranged subview를 stack view의 크기에 맞춘 것이다. 이 현상과 관련된 [stackOverflow](https://stackoverflow.com/questions/53532797/why-uistackview-resize-arranged-subviews) 글도 있으니 참고하면 될 것 같다.
 
-즉 stack view는 
-
-* **높이 제약이 있다 => subview를 stack view의 높이에 맞게 조정한다.**
-* **높이 제약이 없다 => subview의 높이를 이용해서 stack view의 높이를 조정한다.**
-
 ## Dynamic Stack view height
 
-이제 stack view가 내부 컨텐츠에 맞게 자신의 크기를 조정할 수 있다는 점을 알았다. 그렇다면 stack view에 subview들이 계속 추가되거나 삭제되면 stack view의 높이도 자동으로 늘어나거나 줄어들까?
+stack view에 subview들이 계속 추가되거나 삭제되면 stack view의 높이도 자동으로 늘어나거나 줄어들까?
 
 ## Arranged Subview 추가하기
 
@@ -487,9 +611,20 @@ bottom constraint가 있으면 위에서도 봤지만 내부에 배치된 뷰의
 
 사실 `removeFromSuperview`만 하면 충분하다. 공식문서에서는 뷰의 `removeFromSuperview` 메서드를 호출하면 stack view가 해당 뷰를 arrangedSubview 배열에서 제거한다고 했기 때문에, 굳이 `removeArrangedSubview`를 같이 쓰는 것은 불필요하다.
 
+공식문서에서는 관련해서 아래와 같이 나와있다.
+
+<img width="739" alt="image" src="https://user-images.githubusercontent.com/41438361/170606627-38b48f4f-10a9-444c-a183-08ba8e1a00ab.png">
+
+마지막 항목을 보면, `arrangedSubviews` 배열에서 뷰를 제거한다 해도 subview로 제거하는 것은 아니라고 한다. 그래서 stack view가 해당 뷰의 크기와 위치를 관리하지는 않지만 뷰가 여전히 뷰 계층에 있기 때문에 화면에 보일 수도 있다는 것이다.
+
 관련된 stackoverflow 글이 있으니 참고하는 것도 좋다.
 
 https://stackoverflow.com/questions/37525706/uistackview-is-it-really-necessary-to-call-both-removefromsuperview-and-remove
+
+참고로 `arrangedSubviews`은 `subviews` 배열의 부분집합이기 때문에, 이들의 순서는 독립적으로 존재한다.
+
+* `arrangedSubviews` 내의 순서 : stack view에 노출될 순서를 결정한다.
+* `subviews` 내의 순서 : subview들의 Z 축에서의 순서를 정의한다. 만약 두 뷰가 겹친다면, 더 높은 인덱스를 가진 subview가 낮은 인덱스를 가진 뷰 위에 노출된다.
 
 ## Stack view를 다른 뷰 안에 넣었을 때 확장, 축소하기
 
