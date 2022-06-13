@@ -120,10 +120,100 @@ Swift에서 메모리 안전은 중요한 기능 중 하나다. 위 코드와 �
 <img width="381" alt="image" src="https://user-images.githubusercontent.com/41438361/173232581-f093cd0f-afa8-4c91-831c-b43635c47253.png">
 <img width="305" alt="image" src="https://user-images.githubusercontent.com/41438361/173232588-d7d37d47-171e-45bd-a4cd-1faf7a31ab59.png">
 
+쓰레드 안전성을 위해서도 마찬가지. 예상치 못한 동작을 하는 concurrency 버그를 예방하는 것이 목적이다. Swift에서 위 코드와 같이 작성하는 것을 막는 이유는 `removeLast()` 메서드가 배열에 숫자를 더한 다음 실행될 지 알 수 없기 때문이다. 즉 Actor와 같은 걸로 접근을 동기화하지 않고 백그라운드 task에서 배열을 수정하는 것이 안전하지 않다는 뜻이다. Actor는 data race를 제거하기 위한 첫 주요 단계였다.
 
+#### Data race safety
+
+<img width="390" alt="image" src="https://user-images.githubusercontent.com/41438361/173265015-d3e1d91c-f5c1-419f-80d7-265038fc3452.png">
+
+새로 개선된 concurrency model을 적용했다. Actor를 하나의 독립된 섬이라고 생각해서 concurrency 영역에서 고립되었다고 생각하면 된다. 만약 다른 쓰레드가 독립된 actor를 통해 저장된 데이터를 처리하고 싶다면 어떻게 될까?
+
+=> Eliminate data races using Swift Concurrency 세션에서 더 자세히 확인할 수 있다.
+
+<img width="583" alt="image" src="https://user-images.githubusercontent.com/41438361/173265215-d1546357-9812-437d-ac24-506edcd93238.png">
+
+Data 안전에서 쓰레드 안전으로 가는 건 Swift 6의 목표라고 한다. 이를 위해 작년의 concurrency model을 앞선 기능으로 향상시켰고, data race가 발생할 가능성을 확인하는 새로운 opt-in safety check다.
 
 ### Distributed actors
 
+<img width="573" alt="image" src="https://user-images.githubusercontent.com/41438361/173265437-259acd45-8b09-4974-a601-d9ff90032190.png">
+
+Distributed actors는 위의 actor(섬)이 다른 기기에 위치하고, 이 사이에 네트워크를 두는 것이다. 이를 통해 분산된시스템을 간단히 개발할 수 있다.
+
+<img width="998" alt="image" src="https://user-images.githubusercontent.com/41438361/173265655-f20c703a-ecfd-4e09-9c2d-8c5964d5dcd9.png">
+
+위 코드의 distributed actor는 다른 기기에서 호출될 수 있는 actor. `distributed` 키워드는 원격 기기에 위치할 수 있는 actor에서 호출될 수 있는 함수 앞에 붙일 수 있다.
+
+`endOfRound` 메서드 내에서는 로컬/원격 플레이어의 `makeMove` 함수를 호출하는데 distributed actor 호출은 네트워크 에러 때문에 실패할 수 있다. 만약 실패할 경우 에러를 던지기 때문에 `tray`, `await` 키워드를 actor 밖에서 함수를 호출할 때 붙여야 한다.
+
+<img width="374" alt="image" src="https://user-images.githubusercontent.com/41438361/173265987-becb7c33-e6c8-42c7-8dfb-e23e4693d638.png">
+
+오픈 소스 Distributed Actors : 서버 사이드에 초점을 맞춤. 
+
+=> Meet distributed actors in Swift 세션에서 자세한 내용 확인 가능
+
 ### Async algorithms
 
-Sdfsdsadfasdf
+<img width="431" alt="image" src="https://user-images.githubusercontent.com/41438361/173266130-9458f191-ac05-4d66-a734-6c745fb9dce3.png">
+<img width="498" alt="image" src="https://user-images.githubusercontent.com/41438361/173266169-a80694c1-b2c3-4ca8-be8d-b1e9118a4281.png">
+
+AsyncSequence로 작업할 때 사용할 수 있는 새로운 오픈 소스 알고리즘 제공.
+
+=> Meet Swift Async Algorithms 세션
+
+### Concurrency optimizations
+
+<img width="358" alt="image" src="https://user-images.githubusercontent.com/41438361/173266512-084a534c-bd38-483b-b7ef-6e3af65e3bc2.png">
+
+* actor prioritization : actor는 우선순위가 가장 높은 작업을 먼저 실행한다.
+* Priority-Inversion avoidance : 중요도가 낮은 작업이 우선순위가 높은 작업을 block 시킬 수 없다.
+
+### Using the Swift concurrency instruments
+
+<img width="1660" alt="image" src="https://user-images.githubusercontent.com/41438361/173266605-2b80931b-48bb-499b-b13d-47f9cf3336b5.png">
+
+Instruments의 Swift Concurrency view에서 성능 이슈를 확인할 수 있다. 
+
+1. 상단 : 동시에 실행되고 있는 task의 수, 특정 시간 이후 생성된 전체 task.
+2. 하단 : Task 간의 부모-자식 관계를 나타낸 그래프
+
+=> Visualize and optimize Swift concurrency 세션에서 확읺 가능
+
+# Expressive Swift
+
+## Optional Binding
+
+<img width="1659" alt="image" src="https://user-images.githubusercontent.com/41438361/173267126-35934dd2-ea10-4641-881c-b27aec624ba6.png">
+
+옴셔널 바인딩을 할 때 바인딩 할 이름을 쓰지 않고 이제 변수만 써줘도 된다.
+
+## Closure type inference
+
+<img width="1150" alt="image" src="https://user-images.githubusercontent.com/41438361/173267301-401d33b7-e259-4300-ba9a-1f4b7b3c87dd.png">
+
+Swift는 한 줄 클로저 내의 코드에 따라 어떤 타입이 리턴될지 알 수 있다. `parseLine` 함수는 `MailmapEntry`를 리턴하고 있기 때문에 `entires`가 `MailmapEntry`의 배열이 될 것임을 예상할 수 있다. 위 코드처럼 여러 줄의 복잡한 클로저에서도 똑같이 동작한다. 클로저의 result 타입을 명시하지 않고 do-catch, if-else 등을 사용할 수 있다.
+
+## Permitted pointer conversions
+
+<img width="1682" alt="image" src="https://user-images.githubusercontent.com/41438361/173267744-ac2c7013-1f73-46aa-93e0-1755eb973bdf.png">
+
+Swift는 type과 memory safety를 굉장히 중시한다. 따라서 다릍 포인터 타입 간에 자동으로 변환되는 것을 금지한다. 하지만 C는 어떤 경우에는 허용된다.
+
+<img width="1251" alt="image" src="https://user-images.githubusercontent.com/41438361/173268122-db67e459-abbb-44cf-ac9b-edd9a234beea.png">
+
+그래서 C API를 Swift에서 사용할 때 문제가 될 수 있다. C에서 포인터 타입이 같지 않은 걸 C에서 자동 변환을 통해서 해결하기 위해 디자인했지만, Swift에서는 이를 에러로 처리하기 때문이다. 
+
+<img width="1641" alt="image" src="https://user-images.githubusercontent.com/41438361/173268293-b696d83d-93e2-49f4-a233-5eb9a437442c.png">
+
+Swift에서 한 타입의 포인터를 다른 타입으로서 여기고 접근하는 것이 매우 위험하기 때문에 어떤 작업을 할 지 명시적으로 나타내야 한다. 
+
+*그래서 문제가 뭔데?* : Swift는 type safety를 중시하면서 C 친화적인 코드에 굉장히 쉽게 접근하는 것도 중요하게 생각하기 때문이다. 그래서 이런 C 함수를 사용할 때 쉽게 사용하게 만들고 싶었음.
+
+그래서 Swift는 이제 imported 함수와 메서드 호출에 별도의 규칙이 생겼다. C에서는 되는데 Swift에서는 안되는 포인터 변환을 허용한다.
+
+## String processing
+
+<img width="1707" alt="image" src="https://user-images.githubusercontent.com/41438361/173268978-551e3060-365e-4d07-b5db-66e5e93302c7.png">
+
+
+
