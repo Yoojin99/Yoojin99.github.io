@@ -169,8 +169,3 @@ Hangs report를 통해 앱스토어 사용자가 겪는 영향력이 큰 hang들
 <img width="1332" alt="image" src="https://user-images.githubusercontent.com/41438361/173296937-c9de8bca-1e17-48a9-b92c-fba987d51104.png">
 
 Xcode가 한 이미지에서 자동으로 모든 다른 사이즈를 생성할 수 있게 할 수 있다.
-
-## Hangs
-
-ㄴDf
-asdfasdf
