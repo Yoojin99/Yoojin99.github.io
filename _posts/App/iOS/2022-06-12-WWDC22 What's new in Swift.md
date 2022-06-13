@@ -215,5 +215,108 @@ Swift에서 한 타입의 포인터를 다른 타입으로서 여기고 접근�
 
 <img width="1707" alt="image" src="https://user-images.githubusercontent.com/41438361/173268978-551e3060-365e-4d07-b5db-66e5e93302c7.png">
 
+문자열을 파싱하는 함수. 복잡하기 때문에 이를 대체.
 
+<img width="1088" alt="image" src="https://user-images.githubusercontent.com/41438361/173276329-a91222ea-8b06-42e7-b31a-db782606ec44.png">
 
+Swift 5.7에서는 regex를 사용할 수 있다.
+
+<img width="1361" alt="image" src="https://user-images.githubusercontent.com/41438361/173276623-b5853cd0-2c5c-407b-b140-5db8f49d97a9.png">
+
+이 regex literal은 바로 이해하기가 어렵다. 이 규칙들을 심볼 대신에 단어로교체한다면 이해하기가 쉬워진다.
+
+<img width="1578" alt="image" src="https://user-images.githubusercontent.com/41438361/173276740-9fd04d54-a52d-47f0-95ba-d24872c2f2bc.png"><img width="690" alt="image" src="https://user-images.githubusercontent.com/41438361/173276756-9625ee47-5d4a-4f60-b98c-6df1e978e6fb.png">
+
+이를 조합해서 SwiftUI와 같은 형태로 표현할 수 있다. RegexBuilder 라이브러리를 통해 이런 SwiftUI 스타일의 언어를 regex에 사용할 수 있다.
+
+=> Meet Swift Regex, Swift Regex: Beyond The Basics 세션에서 더 알아볼 수 있다.
+
+## Generic code clarity
+
+<img width="930" alt="image" src="https://user-images.githubusercontent.com/41438361/173278366-01a2c8d3-6a6f-4e10-bf4a-e337f1fcffa9.png">
+
+프로토콜 MailMap, 이를 채택하는 두 구조체 HasedMailMap, OrderedMailmap.
+
+<img width="1576" alt="image" src="https://user-images.githubusercontent.com/41438361/173278468-8b9bc9f0-834a-44b2-bbc7-cb6a8457784e.png">
+
+Mailmap 프로토콜을 사용하는 두 방법이 있다. 이 두 버전의 차이를 말하기 어려운데, 같은 문법을 사용하고 있기 때문이다. 위 함수의 "Mailmap"과 밑 함수의 "Mailmap"은 다른 의미를 갖는다.
+
+<img width="1671" alt="image" src="https://user-images.githubusercontent.com/41438361/173278673-040fafb1-223d-497f-9005-65890c79b2fd.png">
+
+프로토콜 이름을 inheritance list, generic parameter list, generic conformanve constraint, opaque result type으로 작성하면 **이 프로토콜을 준수하는 인스턴스**라는 뜻이다.
+
+하지만 varialbe type, generic argument, ganeric same-type constraint, function parameter, result type에서 프로토콜 이름을 쓰면 **이 프로토콜을 준수하는 인스턴스를 포함한 박스**라는 뜻이 된다.
+
+<img width="1658" alt="image" src="https://user-images.githubusercontent.com/41438361/173279726-535107f4-1fe4-46ce-a64d-70d68a590bbd.png">
+
+후자의 경우 더 많은 공간을 차지하고, 연산하는데 더 많은 시간이 걸린다. 하지만 표기 자체는 전자 후자 모두 `Mailmap`으로 표시하기 때문에 내가 어떤 걸 사용하고 있는지 구별하기 힘들다. 
+
+### any keyword
+
+<img width="1637" alt="image" src="https://user-images.githubusercontent.com/41438361/173279883-71e40f45-c377-43a1-b426-caf84f177f05.png"><img width="1624" alt="image" src="https://user-images.githubusercontent.com/41438361/173280043-14668c2a-ac0c-4ec0-a3b8-3b9f9f6e9b03.png">
+
+Swift 5.7에서는 이제 conforming type을 포함하는 박스를 사용할 때 `any` 키워드를 붙여야 한다. 이를 명시적으로 붙이지 않으면 에러 메세지가 뜰 것이다.
+
+<img width="1565" alt="image" src="https://user-images.githubusercontent.com/41438361/173280117-b83839ce-caa7-4361-84ea-2aaf40267232.png">
+
+그래서 위에서 봤던 두 타입의 메서드를 위와 같이 쓸 수 있다.
+
+* 1 : Mailmap을 제네릭 타입을 받는다.
+* 2 : Mailmap을 any 타입으로 받는다. 
+
+<img width="1283" alt="image" src="https://user-images.githubusercontent.com/41438361/173280254-c20785e9-5fd5-4c2a-830b-4a3d526877cf.png">
+
+에러메세지에서도 어떤 일이 발생하는 지 더 명확하게 표현 가능. 위 코드에서는 any Mailmap을 generic Mailmap 파라미터로 전달하고 있다.  원래는 이때 에러메세지로 "Mailmap cannot conform to itself"라는 역설적인 문장의 형태로 출력됐는데, any의 개념을 통해 문제 상황을 명확하게 표현가능하다.
+
+### Pass to generic arguments
+
+<img width="886" alt="image" src="https://user-images.githubusercontent.com/41438361/173280290-307e0c5d-6dd8-4f29-918a-485f9b5d19e7.png">
+
+문제는 mailmap을 포함한 박스(any)가 Mailmap 프로토콜을 준수하지 않는다는 것이다. 그래서 그림과 같이 큰 박스가 파라미터에 맞지 않고, 내부에 있는 적합한 mailmap을 꺼내 이를 파라미터에 전달해야 한다. 그리고 위와 같이 간단한 상황에서는 이제 Swift가 알아서 박스를 열고 내부의 인스턴스를 꺼내 제네릭 파라미터에 전달하기 때문에 에러 메세지를 거의 보지 않게 된다.
+
+### Supports Self and associated types
+
+<img width="1700" alt="image" src="https://user-images.githubusercontent.com/41438361/173280725-73cb3ae7-cfef-40dd-aebd-5983bea953c8.png">
+
+또한 이전에는 프로토콜은 self 타입을 사용하거나 연관 타입을 가지고 있을 때, Equatable과 같은 프로토콜을 채택할 때 any 타입으로서 사용되지 못했다. 이제 Swift 5.7에서 이런 에러는 뜨지 않는다. 
+
+### Primary associated types
+
+<img width="1586" alt="image" src="https://user-images.githubusercontent.com/41438361/173281029-62c1ecf7-3615-41cc-9bdb-c0ab91dfbbe4.png">
+
+또한 Collection과 같이 복잡한 프로토콜도 any 타입으로서 사용될 수 있다. "primary associated types" 신기능 : element type을 명시할 수 있다.
+
+<img width="1444" alt="image" src="https://user-images.githubusercontent.com/41438361/173281175-2a86bb9e-a3bf-40b5-95a4-6aa6b86aa19f.png">
+
+위 코드에서 Element과 같이 사용자들이 사용하면서 중요하게 여기는 연관 타입이 있다면 프로토콜 이름 뒤에 프로토콜의 주요 연관 타입을 제약할 수 있다.
+
+<img width="1211" alt="image" src="https://user-images.githubusercontent.com/41438361/173281415-bde2e48a-5445-4d58-80af-6d7f88461ee9.png">
+
+위 코드에서 Element과 같이 사용자들이 사용하면서 중요하게 여기는 연관 타입이 있다면 프로토콜 이름 뒤에 프로토콜의 주요 연관 타입을 제약할 수 있다.
+
+기존에 사용되던 AnyCollection은 type-erasing wrapper로 any 타입과 같이 동작하게 하기 위해 작성된 구조체다. 
+
+* AnyCollection : boilerplate code로 가득찬 struct
+* any type : 같은 기능을 하는 내장된 언어 기능
+
+### 주의사항
+
+<img width="1306" alt="image" src="https://user-images.githubusercontent.com/41438361/173281821-b1d385e7-4e8a-43b3-9804-d71ede4faa22.png">
+
+Mailmap이 Equatable을 준수한다고 해도 any Mailmap에 == 연산자를 상용할 수 없다. 이유는  두 mailmap이 concrete type을 가지도록 요구되는데 두 개의 any Mailmap을 사용할 때 이게 보장이 되지 않기 때문이다. 
+
+그래서 이런 상황에서는 제약이 따를 수 있기 때문에 대부분의 경우에는 대신에 제네릭을 사용하라고 권고하고 있다.
+
+<img width="1608" alt="image" src="https://user-images.githubusercontent.com/41438361/173282102-fb1a0cc2-748e-4fe6-a1b5-dc24d219c59e.png">
+
+위 코드에서 제네릭을 작성하는 것은 any 버전을 작성하는 것보다 복잡하다. 
+
+<img width="1603" alt="image" src="https://user-images.githubusercontent.com/41438361/173282893-8102ba11-7cb0-4583-94ec-ba0cd88cbb0f.png">
+
+만약 generic parameter가 한 곳에서만 사용된다면 some 키워드를 사용해서 짧게 표현할 수 있다. 
+
+<img width="1608" alt="image" src="https://user-images.githubusercontent.com/41438361/173283024-817babff-195c-4c54-b613-ae1fb39fbd93.png">
+
+그리고 이제 primary associated type을 지원하기 때문에 더 이해하기 쉽게 모든 collection 타입의 mailmap을 받을 수 있게 작성할 수 있다. 
+
+=> Embrace Swift generics, Design protocol interfaces in Swift 세션에서 더 알아볼 수 있다.
