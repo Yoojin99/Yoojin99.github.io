@@ -149,7 +149,141 @@ Subtype 관계를 나타내는 방법은 클래스 계층을 사용하는 것이
 1. 타입 파라미터는 `Animal` 프로토콜을 준수해야 하므로 타입 파라미터를 protocol conformance를 써서 작성한다.
 2. `where` 문뒤에 붙여서 type conformance를 나타낼 수도 있다.
 
+## some
+
 <img width="1269" alt="image" src="https://user-images.githubusercontent.com/41438361/173776926-d2d1e9ff-c03a-493e-8286-31256e223f3d.png">
 <img width="991" alt="image" src="https://user-images.githubusercontent.com/41438361/173777007-99e1b4cc-ebec-41ff-a675-909952a4ecec.png">
 
+타입 파라미터를 명시적으로 쓰고 "where"문을 쓰는게 실제 그 문장보다 더 복잡하게 보인다. 타입 파라미터를 명시적으로 쓰는 대신에 protocol conformance를 `some Animal`과 같이 써서 표현할 수 있다. 
 
+<img width="731" alt="image" src="https://user-images.githubusercontent.com/41438361/173935468-ab7a9c81-93a5-44b6-849e-7ed4fdb86831.png">
+
+**"some" 키워드는 내가 사용하는 특정 타입(구체적인 타입)이 있다는 것을 의미하고, 뒤에 conformance 요구사항을 붙인다.**
+
+또한 파라미터, 결과 타입에서 사용할 수 있다. 
+
+<img width="1639" alt="image" src="https://user-images.githubusercontent.com/41438361/173937321-c9563491-6091-460b-b53f-39f3b1f346ab.png">
+
+SwiftUI 코드를 작성한 적 있다면 위와 같은 코드를 본 적이 있을 것이다. Body 내에서 view의 특정 타입(구체적인 타입)을 리턴하는데 이 body를 사용하는 코드는 특정 타입이 무엇인지 알 필요가 없다.
+
+## opaque type & underlying type
+
+* **opaque type** : 특정 concrete type의 placeholder로서 동작하는 abstract type
+* **underlying type** : placholder 자리에 들어가는 특정 concrete type
+
+<img width="1654" alt="image" src="https://user-images.githubusercontent.com/41438361/173939458-e3e60f07-f779-4751-bf49-34010ce00f65.png"><img width="1287" alt="image" src="https://user-images.githubusercontent.com/41438361/173939878-8fc84278-e407-4e98-802b-20cadef7fec3.png">
+
+`some` 키워드를 사용하는 타입과 괄호 사이의 타입 파라미터는 모두 opaque type을 정의한다. input, output에 모두 opaque 타입을 사용할 수 있기 때문에 파라미터나 결과 위치에서 정의될 수 있다.
+
+Named type paramenter는 항상 input 쪽에 위치하고 있기 때문에 호출하는 곳에서 underlying 타입을 결정하고, 구현쪽에서 추상화된 타입을 사용한다. 
+
+일반적으로 opaque 파라미터나 result 타입의 값을 제공하는 부분에서 underlying type을 결정하고, 해당 부분을 사용하는 곳에서는 추상화 타입을 본다. 무슨 말인지 알아보자.
+
+## local variable
+
+<img width="1718" alt="image" src="https://user-images.githubusercontent.com/41438361/173940767-09b6bacf-ae79-431e-a5c8-19efc56d2415.png">
+
+Underlying 타입은 값에서 추론된다. 로컬 변수의 경우 underlying 타입은 오른쪽 위치의 값에서 추론된다. 
+
+<img width="892" alt="image" src="https://user-images.githubusercontent.com/41438361/173941023-f714be81-e5da-40c6-b8cb-5b1e4f5b04d6.png"><img width="892" alt="image" src="https://user-images.githubusercontent.com/41438361/173941118-b3c71a81-234d-4068-889c-9308ee91e410.png">
+
+이는 opaque 타입을 가진 지역 변수가 항상 초깃값을 가져야 한다는 것을 뜻하고 초깃값을 제공하지 않으면 컴파일러가 에러를 발생시킨다. 또한 underlying 타입은 고정되어야 하기 때문에 underlying 타입을 바꾸려고 한다면 에러가 발생할 것이다.
+
+## parameter
+
+<img width="1716" alt="image" src="https://user-images.githubusercontent.com/41438361/173941360-f5b08c3d-e488-4751-99a7-86e4a03edd30.png">
+
+Opaque 타입을 파라미터에서 쓰면 underlying 타입은 호출되는 곳의 인자 값에서 추론된다. 파라미터 위치에서 "some"을 쓰는 것은 Swift 5.7부터 가능하다. Underlying 타입은 파라미터의 범위만을 제한하기 때문에 호출을 하는 곳들에서 다른 타입의 인자를 전달할 수 있다.
+
+## results
+
+<img width="1732" alt="image" src="https://user-images.githubusercontent.com/41438361/173942303-92a57849-2c6e-49ee-aa1a-bc0743f82893.png">
+
+Opque 결과 타입을 가진 메서드나 연산 프로퍼티는 어디서든지 호출될 수 있기 때문에, 리턴되는 값의 타입이 유일해야 한다.
+
+<img width="840" alt="image" src="https://user-images.githubusercontent.com/41438361/173942588-23c495ca-1d0a-45e1-81ce-939a44b0dadb.png"><img width="1175" alt="image" src="https://user-images.githubusercontent.com/41438361/173942658-8eae5b9a-be86-48f6-8045-e1b241f429ec.png">
+
+만약 리턴되는 타입이 여러개라면 컴파일러가 에러를 발생시킨다.
+
+<img width="818" alt="image" src="https://user-images.githubusercontent.com/41438361/173942832-9c920678-ee8d-414b-af85-f9d80ad39a59.png">
+
+SwiftUI view의 opaque 타입은 ViewBuilder DSL이 같은 underlying return type을 갖게 하도록 변환할 수 있다. 그
+
+`@ViewBuilder` annotation 을 메서드에 작성하고 return 문을 없애면 결과가 ViewBuilder 타입에 의해 만들어진다.
+
+<img width="1304" alt="image" src="https://user-images.githubusercontent.com/41438361/173962808-d8a13b3c-5e9a-4d28-b7ef-b39ccc456dbb.png">
+
+## back to farm
+
+`Farm`의 `feed` 메서드를 보면, opaque 타입을 다른 곳에서 참조할 필요가 없기 때문에`some`을 파라미터 리스트에 쓸 수 있다. opaque 타입을 함수 signature에서 여러 번 사용한다면 name 타입 파라미터가 유용하다. 
+
+가령 `Animal` 프로토콜에 `Habitat`이라는 연관타입을 추가하고, 농장에 있는 동물에게 서식지를 지어주고 싶다고 해보자. 이 경우 result 타입은 특정 동물 타입에 따라 달라질 것이기 때문에 타입 파라미터 `A`가 인자와 리턴 타입에서 필요하다.
+
+<img width="747" alt="image" src="https://user-images.githubusercontent.com/41438361/173963278-1d493070-fb8e-409c-afdb-b5455fa7d075.png">
+
+코드는 타입 파라미터를 제네릭 타입, 저장 프로퍼티의 타입 파라미터, 멤버와이즈 이니셜라이저에 사용할 수 있다. 다른 문맥에서 제네릭 타입을 참조하려면 괄호 안에 명시적으로 특정 타입을 적어야 한다. 정의에 있는 괄호는 제네릭 타입이 어떤 타입을 사용할 것인지를 정해주기 때문에 opaque 타입은 항상 제네릭 타입에서 이름이 붙여져야 한다.
+
+<img width="799" alt="image" src="https://user-images.githubusercontent.com/41438361/173963648-bde84438-3c58-4bc6-ae1f-179c924c8c43.png">
+
+* `crop` : `animal` 파라미터의 타입을 사용해서 `Feed` 연관 타입에 접근해서 `Feed.grow()` 메서드를 호출할 수 있다. `Feed.grow()`를 통해 작물의 인스턴스를 받는다. 
+
+`animal`의 underlying 타입이 고정되었기 때문에 컴파일러는 `crop`, `produce`, `animal` 타입 간의 관계를 알 수 있다. 이런 정적 관계를 통해 동물에게 이상한 종류의 음식을 먹이는 걸 방지할 수 있다.
+
+<img width="793" alt="image" src="https://user-images.githubusercontent.com/41438361/173964086-7f118660-63e4-4347-9c86-72e9d9291e1c.png">
+
+`feedAll` 메서드는 다양한 동물들의 배열을 받아 먹이를 주는 메서드다. 이 배열이 다른 종류의 동물들도 저장하게 하고 싶다. `some Animal`을 사용할 수 있을까?
+
+<img width="1175" alt="image" src="https://user-images.githubusercontent.com/41438361/173964175-e22fd9a9-3386-430e-a2ae-4458e7a2eeff.png">
+
+`some`은 underlying type을 고정시키기 때문에 다양한 타입을 받을 수 없다. Underlying 타입이 고정돼서 배열 내의 모든 요소가 같은 타입을 가져야 한다. 
+
+## any
+
+<img width="670" alt="image" src="https://user-images.githubusercontent.com/41438361/173964296-88f89e56-04fa-47e4-8f27-9a21c3a54714.png">
+
+임의의 `animal` 타입을 표현하기 위해 `any Animal`이라고 쓸 수 있다. **`any` 키워드는 이 타입이 어떤 임의의 `animal` 타입을 저장할 수 있고, underlying 타입은 런타임때 달라질 수 있음을 나타낸다.** `some`과 마찬가지로 뒤에 conformance 요구사항이 따라온다.
+
+**`any Animal`은 동적으로 어떤 종류의 concrete animal 타입이라도 저장할 수 있는 능력을 가진 하나의 정적 타입이고, 값 타입에서 subtype polymorphism을 사용할 수 있게 한다.**
+
+## Existential types provide type erasure
+
+<img width="1603" alt="image" src="https://user-images.githubusercontent.com/41438361/173964655-6c65f217-cbda-4c97-87af-cc728296ac7e.png">
+
+`any Animal`을 박스라고 생각해보자. 박스에 바로 들어갈 수 있을만큼 작은 값이 있을 것이고, 박스에 들어가기는 너무 커서 값은 다른 곳에서 할당되고, 박스는 그 값을 가리키는 포인터를 저장하고 있을 수 있다.
+
+`any Animal`이 동적으로 저장할 수 있는 어떤 concrete animal을 **existential 타입**이라고 한다. 그리고 **다른 concrete 타입들을 모두 표현하기 위해 하나의 표현법을 사용하는 전략을 "type erasure"라 한다.** 컴파일 타임에서 concrete 타입은 지워지고, concrete 타입은 런타임에서만 알 수 있다.
+
+위의 두 종류의 existential 타입은 같은 정적 타입을 갖지만, 다른 동적 타입을 갖는다. 
+
+<img width="1229" alt="image" src="https://user-images.githubusercontent.com/41438361/173966091-c6def0c1-7f36-4006-866f-ac2d8a850405.png">
+
+Type erasure는 다른 animal 값 사이의 type-level 차이를 없애서 다른 동적 타입들을 같은 정적 타입으로서 사용할 수 있게 해준다. `feedAll` 메서드에서도 type erasure를 쓸 수 있다.
+
+<img width="1696" alt="image" src="https://user-images.githubusercontent.com/41438361/173966684-31aef303-a1f5-4ce7-a5d3-381f10e791ae.png">
+
+Swift 5.7부터 `any` 키워드를 연관 타입을 가진 프로토콜에 사용할 수 있다.
+
+<img width="863" alt="image" src="https://user-images.githubusercontent.com/41438361/173967260-1358b84b-50fc-4461-8e55-ceb3b20db672.png">
+
+`feedAll` 메서드 안에서 동물마다 돌며 `Animal` 프로토콜의 `eat` 메서드를 호출했다. 이 메서드 안에서는 특정 underlying 동물 타입의 `Feed` 타입을 알아야 한다. 하지만 컴파일 에러가 발생하는데, 특정 동물 타입 간의 type-level 차이를 없애서 특정 animal 타입에 의존하는 타입 관계들(연관 타입 포함)도 없어졌기 때문이다. 그래서 `Feed` 가 무엇인지 알 수 없다. `any Animal`에서 바로 `eat`를 호출하는 것이 아니라 `some Animal`에서 `feed` 메서드를 호출해야 한다.
+
+<img width="1686" alt="image" src="https://user-images.githubusercontent.com/41438361/173968753-5aac1b7a-33a9-4ce3-8cbf-6047e088d5bf.png">
+
+`any Animal`은 `some Animal`과는 다른 의미를 갖는데, 컴파일러는 `any Animal`의 인스턴스를 박스를 열고 내부의 underlying 값을 꺼내서 `some Animal`로 만들어줄 수 있다. Swift 5.7에서부터 이런 unboxing이 가능하다. 컴파일러가 박스를 열고, 내부에 저장된 값을 꺼낸다고 생각하면 된다.
+
+`some Animal`은 고정된 underlying 타입을 가지고 있기 때문에 underlying 타입의 모든 연산, 연관 타입에 접근할 수 있다. 
+
+<img width="766" alt="image" src="https://user-images.githubusercontent.com/41438361/173970579-8562bf6b-4bcc-4083-96d7-66e995c64222.png">
+
+`feed` 메서드에 각 animal을 전달해서 구현할 수 있다. 
+
+## some vs any
+
+<img width="1642" alt="image" src="https://user-images.githubusercontent.com/41438361/173970663-05f80d96-bb0b-4c79-93d5-e1408f49576a.png">
+
+* some : underlying 타입이 고정된다. 제네릭 코드에서 underlying 타입에 type 관계가 형성되기 때문에 사용하는 프로토콜의 API와 연관 타입에 접근할 수 있다.
+* any : 임의의 concrete 타입을 저장할 때 사용한다. Type erasure를 지원해서 다양한 타입의 컬렉션을 나타낼 수 있고, underlying 타입을 명시하지 않아도 되며, 옵셔널을 사용할 수 있고 구현 디테일을 추상화할 수 있다.
+
+<img width="1293" alt="image" src="https://user-images.githubusercontent.com/41438361/173970996-55c31896-fb15-47aa-a545-e3a2221f9f65.png">
+
+영상에서는 "some"을 기본적으로 사용하고 임의의 값을 저장해야 하는 곳에서만 "some"을 "any"로 바꾸라고 하고 있다.
