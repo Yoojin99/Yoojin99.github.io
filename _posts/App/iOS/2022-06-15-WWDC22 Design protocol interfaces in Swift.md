@@ -167,8 +167,92 @@ Opaque 타입을 써서 제네릭 코드를 작성하는 것은 abstract type re
 
 <img width="690" alt="image" src="https://user-images.githubusercontent.com/41438361/174021225-30e753af-31c4-478c-8c82-a6a0bb03b3b5.png">
 
-`Animal` 프로토콜에 
+`Animal` 프로토콜에 구체적인 동물 먹이 타입을 위해 새로운 연관 타입을 추가했다. 더불어 `eat()` 메서드에서 이 먹이 타입을 사용한다.
 
+<img width="724" alt="image" src="https://user-images.githubusercontent.com/41438361/174022881-31f4a805-e416-4123-a2ac-fcd0ffa41f76.png"><img width="701" alt="image" src="https://user-images.githubusercontent.com/41438361/174022963-12c2d1c5-1d09-4306-83be-053850290c76.png">
 
+그리고 동물 먹이를 만들기 위해서는 적절한 종류의 작물을 기르고, 수확해서 먹이를 생성해야 한다.
 
+두 종류의 concrete 타입을 만들었다.
 
+* `Cow`는 `hay`를 먹는다. `hay`를 기르면 `alfalfa` 작물을 얻을 수 있다. `alfalfa`를 수확하면 `hay`를 얻는다.
+* `Chicken`은 `scratch`를 먹는다. `scratch`를 기르면 `millet` 작물을 얻는다. `millet`을 수확하면 `scratch`를 얻는다.
+
+<img width="896" alt="image" src="https://user-images.githubusercontent.com/41438361/174023521-e3f436df-6a14-4867-af66-8d240dc60cb1.png">
+
+위에서 봤던 두 종류의 concrete 메서드를 추상화해서 `feddAnimal()` 메서드를 한 번만 구현해서 소와 닭, 그리고 다른 동물들에게 모두 먹이를 주고 싶다고 해보자. `feedAnimal()`이 `Animal` 프로토콜의 `eat()` 메서드를 호출할 것이다. 그리고 이 `eat()` 메서드는 인자로 먹이를 받고 있기 때문에 consuming position에서 연관 타입을 가진다고 말할 수 있다. `feedAnimal()` 메서드가 `some Animal`을 파라미터 타입으로 갖게 정의해서 existential의 박스를 열고 내용물을 꺼낼 것이다.
+
+<img width="690" alt="image" src="https://user-images.githubusercontent.com/41438361/174024314-579f0715-4ac9-4b95-af95-861d758fdef2.png">
+
+`AnimalFeed`와 `Crop` 프로토콜을 정의하고 내부에 연관 타입을 추가했다. 
+
+* `AnimalFeed` : `Crop`을 준수하는 `CropType` 연관 타입을 가진다.
+* `Crop` : `AnimalFeed`를 준수하는 `FeedType` 연관 타입을 가진다.
+
+<img width="1644" alt="image" src="https://user-images.githubusercontent.com/41438361/174024606-9b0eca63-dbc5-4a35-9b83-ed8ed42342a7.png"><img width="1736" alt="image" src="https://user-images.githubusercontent.com/41438361/174024698-872d4b4b-742a-4986-95ea-9779591f3ab8.png">
+
+각 프로토콜의 타입 파라미터의 다이어그램을 위와 같이 표현할 수 있다. 
+
+1. 모든 프로토콜은 `Self` 타입(프로토콜을 준수하는 concrete 타입)을 가진다.
+2. 프로토콜은 `Crop`을 준수하는 `CropType` 연관 타입을 가지고 있다.
+3. 연관 타입 `CropType`은 중첩된 연관 타입 `FeedType`을 가지고 있다.
+4. 이 중첩된 `FeedType`은 또 중첩된 `CropType`을 가지고 있다.
+5. ...
+
+이를 통해 `AnimalFeed`와 `Crop`을 준수하는 연관 타입 간에 무한 중첩이 생기는 것이다. 이는 `Crop` 프로토콜에서부터 시작해도 마찬가지다.
+
+<img width="1461" alt="image" src="https://user-images.githubusercontent.com/41438361/174025757-8fd82535-5ea9-4c41-bd97-c89f17fab3b7.png">
+
+`feedAnimal` 메서드 내에서 `Animal` 프로토콜을 준수하는 타입의 값을 가져올 수 있고, `Animal` 은 연관 타입인 `FeedType`을 가지고 있었다.
+
+* `type(of: animal)` : `some Animal: Animal`
+* `type(of: animal).FeedType` : `(some Animal).FeedType: AnimalFeed`
+* `type(of: animal).FeedType.grow()` : `(some Animal).FeedType.CropType: Crop`
+* `crop.harvest()` : `(some Animal).FeedType.CropType.FeedType: AnimalFeed`
+
+그래서 `feed`는 결국 `(some Animal).FeedType.CropType.FeedType` 타입이 되는 것이다.
+
+<img width="1241" alt="image" src="https://user-images.githubusercontent.com/41438361/174026388-550643da-3f50-449f-abba-f10845ac3432.png">
+
+이는 잘못된 타입이다. `eat()` 메서드는 `(some Animal).FeedType`을 요구하는데, 이렇게 작성하면 동물에게 잘못된 먹이를 줄 수도 있다. 
+그리고 프로토콜 정의가 너무 일반적이기 때문에 concrete 타입 간의 요구되는 관계를 적절하게 모델링하지도 못했다.
+
+<img width="1778" alt="image" src="https://user-images.githubusercontent.com/41438361/174026893-fef7a3dc-5b9a-46a4-91bb-d92e3d8ab663.png">
+
+hay를 기르면 alfalfa를 얻고, 이를 수확하면 hay를 얻고, 이게 계속 반복된다. 만약 `Alfalfa`가 `Scratch`를 수확한다고 잘못 수정해버렸다고 해보자. 이래도 concrete 타입은 여전히 `AnimalFeed`와 `Crop` 프로토콜의 요구사항을 충족시킨다. 
+
+<img width="1676" alt="image" src="https://user-images.githubusercontent.com/41438361/174028825-7a9fc762-3584-4a0c-aa78-44b5365dcd01.png">
+
+문제는 너무 많은 별개의 연관 타입이 있다는 것이다.(`Self`, `Self.CropType.FeedType`) 이 두 연관 타입들이 실제로 같은 concrete type임을 명시해야 한다.
+
+<img width="394" alt="image" src="https://user-images.githubusercontent.com/41438361/174029000-4d8e211d-8e61-45f0-aad9-a61e51281286.png">
+
+이 연관타입간의 관계를 `where` 문에서 same-type requirement를 설정할 수 있다. 
+
+<img width="687" alt="image" src="https://user-images.githubusercontent.com/41438361/174029268-2a2f061b-8c29-47ba-8851-a80f66155617.png">
+
+위 코드에서는 same-type 요구사항을 추가해서 `AnimalFeed` 프로토콜을 준수하는 concrete 타입에 제약을 설정했다. 
+
+`Self`는 `Self.CropType.FeedType`과 같다고 명시한 것이다.
+
+<img width="1634" alt="image" src="https://user-images.githubusercontent.com/41438361/174029617-cd2b29a4-86d6-436c-95df-75706a29ee65.png"><img width="846" alt="image" src="https://user-images.githubusercontent.com/41438361/174029695-bfbbd36f-99ec-412a-af39-cca70f7c757f.png">
+
+따라서 다이어그램으로 표현했을 때 위와 같이 변한다.
+
+`Self`는 `CropType`을 가지고 있는데, 우리는 same-type 요구사항을 추가해서 `CropType.FeedType`이 `Self`와 같다고 명시했다. 따라서 두 번째 사각형에서 다시 첫 번째 사각형으로 돌아올 수 있는 것이다.
+
+<img width="1644" alt="image" src="https://user-images.githubusercontent.com/41438361/174030007-cb61a4b6-2f6d-42a6-a743-855bc1d63732.png"><img width="929" alt="image" src="https://user-images.githubusercontent.com/41438361/174030104-0ac03101-bb84-45b0-9055-1017b28b2489.png">
+
+`Crop`에서 시작했을 때도 same-type 요구사항을 추가해서 다이어그램을 위와 같이 바꿀 수 있다.
+
+<img width="1653" alt="image" src="https://user-images.githubusercontent.com/41438361/174030280-e0b1217f-804a-4ad0-8f61-5b080fc275cb.png">
+
+이제 동물들에게 올바른 타입의 먹이를 제공할 수 있다.
+
+<img width="1298" alt="image" src="https://user-images.githubusercontent.com/41438361/174030507-151e13df-f648-4cf7-b96a-dde8917af0bb.png">
+
+데이터 모델을 이해하면 이런 다른 중첩 연관 타입을 가진 것들 사이의 동일성을 정의하는데 same-type 요구사항을 사용할 수 있다. 
+
+<img width="1747" alt="image" src="https://user-images.githubusercontent.com/41438361/174030887-3889b800-2e6a-4700-be8f-9c5e87675179.png">
+
+*영상을 보면서 이해하기 어려운 부분들이 많았어서 보는 도중에는 이분이 미웠는데,,,ㅋㅋㅋㅋ 영상 끝날 시점에 웃으면서 마무리하시니까 미웠던게 싹 없어짐*
