@@ -399,5 +399,98 @@ func allItemsMatch<C1: Container, C2: Container>
         return true
 }
 ```
-                                             
-                                        
+                                         
+# Extensions with a Generic Where Clause
+
+`where`을 extension의 일부로 사용할 수도 있다.
+
+ ```swift
+ extension Stack where Element: Equatable {
+    func isTop(_ item: Element) -> Bool {
+        guard let topItem = items.last else {
+            return false
+        }
+        return topItem == item
+    }
+}
+```
+    
+만약 Element가 `Equatable`하지 않은 스택에서 `isTop(_:)` 를 호출하면 컴파일 에러가 발생하게 된다.
+
+```swift
+struct NotEquatable { }
+var notEquatableStack = Stack<NotEquatable>()
+let notEquatableValue = NotEquatable()
+notEquatableStack.push(notEquatableValue)
+notEquatableStack.isTop(notEquatableValue)  // Error
+```
+
+프로토콜 extension에서도 whrere문을 사용할 수 있다.
+
+```swift
+extension Container where Item: Equatable {
+    func startsWith(_ item: Item) -> Bool {
+        return count >= 1 && self[0] == item
+    }
+}
+```
+
+# Contextual Where Clauses
+
+구현 내부에서 제네릭 타입 제약이 없는 곳에서 정의 부분에 `where` 문을 사용할 수 있다. 
+
+```swift
+extension Container {
+    func average() -> Double where Item == Int {
+        var sum = 0.0
+        for index in 0..<count {
+            sum += Double(self[index])
+        }
+        return sum / Double(count)
+    }
+    func endsWith(_ item: Item) -> Bool where Item: Equatable {
+        return count >= 1 && self[count-1] == item
+    }
+}
+let numbers = [1260, 1200, 98, 37]
+print(numbers.average())
+// Prints "648.75"
+print(numbers.endsWith(37))
+// Prints "true"
+```
+
+위 코드를 아래와 같이 다시 쓸 수도 있다. 두 개의 extension을 생성하고 각각에 `where` 문을 붙인다.
+
+```swift
+extension Container where Item == Int {
+    func average() -> Double {
+        var sum = 0.0
+        for index in 0..<count {
+            sum += Double(self[index])
+        }
+        return sum / Double(count)
+    }
+}
+extension Container where Item: Equatable {
+    func endsWith(_ item: Item) -> Bool {
+        return count >= 1 && self[count-1] == item
+    }
+}
+```
+
+# Associated Types with a Generic Where Clause
+
+Subscript도 제네릭할 수 있고 `where`문을 포함할 수 있다.
+
+```swift
+extension Container {
+    subscript<Indices: Sequence>(indices: Indices) -> [Item]
+        where Indices.Iterator.Element == Int {
+            var result: [Item] = []
+            for index in indices {
+                result.append(self[index])
+            }
+            return result
+    }
+}
+```
