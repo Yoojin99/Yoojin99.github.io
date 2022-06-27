@@ -455,4 +455,92 @@ DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) {
 }
 ```
 
+변경사항을 적용한 Snapshot을 data source에 적용한다.
+
+### collectionView와 연결
+
+```swift
+func configureDataSource() {
+    let cellRegistration = UICollectionView.CellRegistration
+    <UICollectionViewCell, InsertionSortArray.SortNode> { (cell, indexPath, sortNode) in
+        // Populate the cell with our item description.
+        cell.backgroundColor = sortNode.color
+    }
+
+    dataSource = UICollectionViewDiffableDataSource<InsertionSortArray, InsertionSortArray.SortNode>(collectionView: insertionCollectionView) {
+        (collectionView: UICollectionView, indexPath: IndexPath, node: InsertionSortArray.SortNode) -> UICollectionViewCell? in
+        // Return the cell.
+        return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: node)
+    }
+
+    let bounds = insertionCollectionView.bounds
+    let snapshot = randomizedSnapshot(for: bounds)
+    dataSource.apply(snapshot)
+}
+```
+
+우리가 사용할 타입을 명시하고, item provider 클로저 내에서는 단순히 색을 설정해준다.
+
 # Considerations
+
+<img width="1204" alt="image" src="https://user-images.githubusercontent.com/41438361/175841772-c02ebeb4-c1cb-4290-afcc-e2de986e1ef8.png">
+
+이제 `performBatchUpdates`, `insertItems()` 를 호출할 필요가 없다. 
+
+## Constructing Snapshots
+
+<img width="1726" alt="image" src="https://user-images.githubusercontent.com/41438361/175841862-cc5ec14f-f5c7-4874-ad32-1929df9526bc.png">
+
+Snapshot을 생성하는 두 방법이 있다. 
+
+1. 빈 Snapshot을 생성 : 섹션, 아이템으로 snapshot을 구성한다.
+2. 현재 상태를 나타내는 snapshot 생성 : 변경할 범위가 작을 때 유용하다. snapshot을 생성할 때, 복사본을 갖게 되기 때문에 이 snapshot에 수정작업을 해도 원본 data source에는 영향을 미치지 않는다.
+
+<img width="965" alt="image" src="https://user-images.githubusercontent.com/41438361/175842026-02b6424b-b5c0-41f7-a582-8ec365248fdc.png">
+
+Snapshot의 아이템, 섹션이 몇 개인지, identifier가 무엇인지 알기 위한 많은 API가 있다. 
+
+<img width="1316" alt="image" src="https://user-images.githubusercontent.com/41438361/175842095-0fd1ed24-02d2-4629-9844-7473a89118a5.png">
+
+이제 IndexPath를 가지고 작업하지 않아도 되기 때문에, snapshot을 구성하는 API에서 indexPath를 사용하는 걸 확인할 수 없다. 
+대신 identifier를 가지고 작업한다. 가령 "a identifier" 전에 "b identifier"를 삽입하는 작업을 할 수 있다. 
+
+## Identifiers
+
+<img width="587" alt="image" src="https://user-images.githubusercontent.com/41438361/175842254-2a1a688d-ddaf-4072-a5ed-887898aa9fd8.png">
+
+* identifier는 고유해야 한다. - 대부분 앱에서 모델 객체 각각에 고유한 무언가를 부여하고 있기 때문에 고유한 identifier를 사용하는 건 자연스럽다.
+* Swift에서는 hashable 해야 한다. - Swift에서는 이를 자동으로 할 수 있는 방법이 많은데, 데모에서는 enum을 사용했다.
+* 모델 데이터에 identifier 자체를 추가할 수 있다.
+
+<img width="1012" alt="image" src="https://user-images.githubusercontent.com/41438361/175842478-57444ae8-618a-4b7f-a5c9-75c5c01660b2.png">
+
+위와 같이 구조체를 이용해서 hashable 한 걸 만들 수 있다. 
+
+<img width="1180" alt="image" src="https://user-images.githubusercontent.com/41438361/175842553-85df9d4b-9d01-48af-b5f5-e7c041db0858.png">
+
+기존에 사용하던 IndexPath 기반의 API들이 있다. 이제는 indexPath 대신 identifier를 사용하고 있기 때문에 identifier와 IndexPath간 변환할 수 있는 새로운 API가 생겼다. 위 코드에서는 indexPath를 받아 이를 Identifier로 변환하고 있다. 이는 O(1) 시간 내에 할 수 있는 작업이기 때문에 굉장히 빠르다.
+
+## Performance
+
+<img width="931" alt="image" src="https://user-images.githubusercontent.com/41438361/175842692-3cb9ad4c-7f3a-4b37-9d21-f3ced182e447.png">
+
+diff의 시간 복잡도는 O(N)이다. 따라서 아이템이 많을수록 diff는 더 오래 걸리게 된다. 앱을 개발할 때 성능을 측정하는 건 중요하다. Main queue는 항상 프리하게 해서 사용자 이벤트에 즉각적으로 반응할 수 있게 하고 싶을 것이다. 
+
+diff가 선형 시간이 걸리기 때문에 더 많은 아이템이 있을 수록 시간이 더 오래 걸린다. 따라서 apply 메서드를 백그라운드 큐에서 호출하는 건 괜찮다. 
+
+<img width="1358" alt="image" src="https://user-images.githubusercontent.com/41438361/175843165-88dbb4a5-222d-44da-91c3-757c9220550f.png">
+
+만약 모델이 백그라운드 큐에서 apply를 호출하기로 결정했다면 일관적으로 apply를 백그라운드 큐에서 호출해야 한다. 백그라운드 큐와 메인 큐에서 섞어서 호출하지 않는 것이 좋다. 
+
+# 정리
+
+DiffableDataSource는 collectionView와 UITableView에 모델 데이터를 적용하는 것을 아주 간단하게 만들어준다. 
+
+<img width="868" alt="image" src="https://user-images.githubusercontent.com/41438361/175843318-6c1d1bd5-2c32-41c1-a15d-1cc31df0a13b.png">
+
+간단하면서도 강력하다. 디버깅을 위해서 고생하거나 batch update 코드를 힘들게 작성하지 않아도 된다. 앱에 어떤 것을 할 것인지에만 집중할 수 있고, 복잡한 부분은 프레임워크에 맡길 수 있다.
+
+DiffableDataSource는 iOS, TVoS, MacOS에서 사용할 수 있다. diff를 제공하는 것에 추가로 UI에 애니메이션을 통해 변화를 자연스럽게 적용할 수 있게 해준다. 
+
+내장된 diff는 빠르고, 매우 엄격하게 테스트됐다. 이를 앱에 적용하기만 하면 된다.
