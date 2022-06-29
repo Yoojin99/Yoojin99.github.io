@@ -44,7 +44,6 @@ Swift Async Algorithms 패키지는 여기에서 더 나아가 clock을 활용�
 
 여러개의 input AsyncSequence를 다룰 수 있는 알고리즘들이 있다. 이 알고리즘들은 AsyncSequence를 여러 다른 방법으로 합치는 것에 초점을 맞춘다. 하지만 이들은 하나의 공통점이 있는데 **여러 개의 input AsyncSequence를 받아 하나의 output AsyncSequence를 만드는 것이다.*
 
-
 ## Zip
 
 <img width="823" alt="image" src="https://user-images.githubusercontent.com/41438361/174726854-64acf4ef-3020-41c2-b603-c87e7eb6cd5f.png">
@@ -65,11 +64,39 @@ Zip이 병행적이기 때문에, transcoding이 더 오래 걸릴 수도 있고
 가령 메세지를 주고 받을 때 AsyncSequence를 사용한다고 해보자. 그리고 계정이 여러개 있다면, 각 계정이 메세지들의 AsyncStream을 생성할 것인데, 이를 구현할 때는 모든 AsyncSequence인 것처럼 다뤄야 한다. 따라서 AsyncSequence를 합치는 알고리즘이 필요했고,
 이를 Merge 알고리즘을 통해 해결할 수 있다.
 
-Merge는 여러 AsynceSequence들을 병행적으로 iterate한다는 점에서는 Zip과 비슷하다. 하지만 짝이 지어진 튜플을 생성하는 대신에 각 요소들이 같은 타입의 요소들을 가지고 있어서 이 요소들을 합쳐 하나의 AsyncSequence를 만든다.
+Merge는 여러 AsynceSequence들을 병행적으로 iterate한다는 점에서는 Zip과 비슷하다. 하지만 **짝이 지어진 튜플을 생성하는 대신에 베이스들(여기에서는 각 작업을 의미하는 것 같다)이 같은 타입의 요소를 가정하고 이 요소들을 합쳐 하나의 AsyncSequence를 만든다.**
 
+![merge](https://user-images.githubusercontent.com/41438361/176350241-324afc47-20a1-469a-a0e2-f82a7644c87f.gif)
 
+Merge는 어떤 작업에서든 첫 번째 요소를 받는 걸로 시작한다. 더 이상 생성되는 값들이 없을 때까지 반복한다. 더 이상 생성되는 값이 없을 때 모든 base AsyncSequence가 nil을 리턴한다. 만약 base 중 하나라도 에러를 띄우면 다른 모든 iteration이 취소된다.
+
+Merge를 통해 메세지들의 AsyncSequence를 받고 이들을 합칠 수 있다. 
 
 # Clock, instant, duration
+
+Zip, Merge와 같이 합치는 알고리즘은 값들이 생성될 때 병행적으로 동작하는데, 시간 자체를 가지고 작업하는게 유용할 때가 있다. Swift 5.7에서는 시간과 관련된 안전하고 일관성 있는 새로운 API `Clock`, `Instant`, `Duration`이 새로 등장했다.
+
+## Clock
+
+<img width="1005" alt="image" src="https://user-images.githubusercontent.com/41438361/176350823-97492265-1eb6-430a-8895-a2bf027e10b0.png">
+
+Clock 프로토콜은 두 primitive를 정의한다.
+
+1. 주어진 시간이 지난 후 wake up하는 방법
+2. 현재라는 시간(개념)을 생성하는 방법
+
+### ContinuousClock vs SuspendingClock
+
+* ContinuousClock : 스탑워치처럼 시간을 잴 수 있다. 관측하는 것의 상태와 상관 없이 시간이 흐른다.
+* SuspendingClock : 기기가 sleep할 경우 시간을 멈춘다. 
+
+<img width="1574" alt="image" src="https://user-images.githubusercontent.com/41438361/176352175-4324c0d0-d6d0-440d-a8e4-f3aea85bc102.png">
+
+위 코드에서 왼쪽은 `SuspendingClock`, 오른쪽은 `ContinuousClock`을 사용해서 시간을 잰다. 아래에는 재고 있는 시간의 경과를 나타낸다. 만약 기기가 sleep하면(맥북의 경우 노트북을 닫는 경우 등) `SuspendingClock`을 사용한 경우에서 시간을 재는 작업이 멈추게 된다.
+
+<img width="1559" alt="image" src="https://user-images.githubusercontent.com/41438361/176352444-3f3fc95d-8d4a-4a6c-9381-8ce9f0a28548.png">
+
+그래서 기기가 다시 wake up했을 때(맥북의 경우 노트북을 다시 열었을 때 등) `SuspendingClock`을 사용해서 시간을 잰 경우는 기기가 sleep한 시점에서 멈춰있지만 `ContinuousClock`을 사용한 경우는 계속 시간을 재서 더 많은 시간이 경과했을 것이다.
 
 
 # Algorithms using time
