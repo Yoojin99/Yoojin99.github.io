@@ -19,14 +19,14 @@ minimal_mistakes_skin: "plum" # "default" "air", "aqua", ...
 
 # Site Settings
 locale: "ko-KR" #"en-US"
-title: "Blog Name Here" # 상단 헤더에 보이는 블로그 명
+title: "yj.ios" # 상단 헤더에 보이는 블로그 명
 title_separator: "&#124;"
-subtitle: # site tagline that appears below site title in masthead
-name: "your name here" # 블로그 닉네임 설정
-description: "this is my blog!" # 블로그 설명
-url: "https://github-account.github.io" # 블로그 URL
+subtitle: "iOS Devlog by YJ"
+name: "yj.ios" # 블로그 닉네임 설정
+description: "" # 블로그 설명
+url: "https://yoojin99.github.io" # 블로그 URL
 baseurl: # the subpath of your site, e.g. "/blog"
-repository: "github-account/github-account.github.io" # GitHub Repo 이름
+repository: "Yoojin99/Yoojin99.github.io" # GitHub Repo 이름
 teaser: #
 
 # logo                     : # 블로그명 앞에 로고 추가하고 싶을 경우 사용
@@ -56,8 +56,8 @@ reCaptcha:
 atom_feed:
   path: # blank (default) uses feed.xml
   hide: # true, false (default)
-search: # true, false (default)
-search_full_content: # true, false (default)
+search: true
+search_full_content: true
 search_provider: # google
 algolia:
   application_id: # YOUR_APPLICATION_ID
@@ -98,13 +98,16 @@ analytics:
 
 # Site Author
 author:
-  name: "your name here" # 블로그 닉네임
+  name: "YJ" # 블로그 닉네임
   avatar: "/assets/images/meee.png" # 블로그 프로필 사진
   #   bio              : "hi all!"
   # location         : "Seoul, Korea"
   # email            : "youremailhere@xxxxxx.com"
 
   links: # 사이트 링크
+      - label: "Github"
+        icon: "fab fa-fw fa-github"
+        url: "https://github.com/Yoojin99"
 #     - label: "Email"
 #       icon: "fas fa-fw fa-envelope-square"
 #       # url: "mailto:your.name@email.com"
@@ -135,7 +138,7 @@ footer:
       # url:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      # url:
+      url: "https://github.com/Yoojin99"
     - label: "GitLab"
       icon: "fab fa-fw fa-gitlab"
       # url:
@@ -282,3 +285,4 @@ defaults:
       related: true
       sidebar:
         nav: "categories"
+
