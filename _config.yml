@@ -91,10 +91,9 @@ social:
 # Analytics
 analytics:
   provider: "google-gtag"
-  # false (default), "google", "google-universal", "google-gtag", "custom"
   google:
-    tracking_id: "your tracking id here"
-    anonymize_ip: # true, false (default)
+    tracking_id: "G-82ELV4TY4W"
+    anonymize_ip: true
 
 # Site Author
 author:
@@ -285,4 +284,5 @@ defaults:
       related: true
       sidebar:
         nav: "categories"
+
 
