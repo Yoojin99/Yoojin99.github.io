@@ -27,6 +27,8 @@ categories:
         url: /categories/categories3/
       - title: "Swift Basics"
         url: /categories/swift/basics/
+      - title: "Concurrency"
+        url: /categories/swift/concurrency/
 
   - title: "Title2"
     children:
